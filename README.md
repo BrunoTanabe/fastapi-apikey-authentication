@@ -1,921 +1,781 @@
-# FastAPI Clean Architecture and Domain-Driven Design Template
+# FastAPI API Key Authentication
 
-The **fastapi-clean-architecture-ddd-template** repository is a Python backend project template, aimed at applications that use FastAPI and potentially Artificial Intelligence components. This project serves as a foundation for creating new applications following a modular and scalable architecture, promoting separation of concerns and ease of maintenance. The architecture adopted is inspired by **Clean Architecture** and **Domain-Driven Design (DDD)** principles, organizing the code into well-defined layers: domain, application, infrastructure, and presentation, along with core configuration components.
+[![Python](https://img.shields.io/badge/python-3.13-blue.svg?logo=python\&logoColor=white)](#-requirements)
+[![FastAPI](https://img.shields.io/badge/fastapi-0.115.13-green.svg?logo=fastapi\&logoColor=white)](#-key-technologies-used)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg?logo=docker\&logoColor=white)](https://www.docker.com/)
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg?logo=github\&logoColor=white)](#-how-to-run-the-project-locally)
+[![Docs](https://img.shields.io/badge/docs-Swagger-informational.svg?logo=swagger\&logoColor=white)](#-available-endpoints)
 
-This README documents the project's structure, explaining the purpose of each folder and file, naming conventions, dependencies used, and best practices to follow. In the end, any team member should be able to understand the proposed architecture and know how to extend the template for new features without doubts.
+> **FastAPI application example with API Key authentication – Python Backend Template**
 
-## Table of Contents
+**FastAPI API Key Authentication** is a **100% Python** backend *template* project that demonstrates how to implement simple **API Key** authentication in a REST API built with FastAPI. Following **Clean Architecture** and **Domain-Driven Design (DDD)** principles, the project provides a modern structural foundation for secure and scalable applications.
 
-* [Architecture Overview](#architecture-overview)
-* [Folder and File Structure](#folder-and-file-structure)
+Aimed at **beginner to advanced** developers, the template offers:
 
-  * [Project Root](#project-root)
-  * [`app/` Directory (Application)](#app-directory-application)
+* **Security out of the box**: API Key authentication (via customizable header) already integrated into protected routes.
+* **Organized architecture**: clear separation between *core* (infrastructure) and *domain modules*, making maintenance and growth easier.
+* **Automatic documentation**: Swagger (OpenAPI) interface available to quickly test and integrate endpoints.
+* **Built-in best practices**: Pydantic v2 validation, structured logging (Loguru), standardized responses, and pre-configuration for Docker and tests.
 
-    * [`app/core/` Directory (Core Configuration)](#appcore-directory-core-configuration)
-    * [`app/modules/` Directory (Feature Modules)](#appmodules-directory-feature-modules)
+Below you’ll find a complete guide to installation, usage, and contribution. Enjoy!
 
-      * [Example Module: `app/modules/example/`](#example-module-appmodulesexample)
+---
 
-        * [Domain](#domain)
-        * [Application](#application)
-        * [Infrastructure](#infrastructure)
-        * [Presentation](#presentation)
-  * [`docs/` Directory (Documents)](#docs-directory-documents)
-  * [`scripts/` Directory (Utility Scripts)](#scripts-directory-utility-scripts)
-  * [`test/` Directory (Tests)](#test-directory-tests)
-* [Implementation Guide and Best Practices](#implementation-guide-and-best-practices)
+## 📑 Table of Contents
 
-  * [Separation of Concerns and Layers](#separation-of-concerns-and-layers)
-  * [File and Code Naming Conventions](#file-and-code-naming-conventions)
-  * [Dependency Inversion and Dependency Injection](#dependency-inversion-and-dependency-injection)
-  * [Code Standards and Quality](#code-standards-and-quality)
-  * [Test Structure](#test-structure)
-* [Project Dependencies](#project-dependencies)
-* [Environment Setup and Execution](#environment-setup-and-execution)
+* [1. General Description](#-general-description)
 
-  * [UV Package Manager](#uv-package-manager)
-  * [Setting Environment Variables (.env)](#setting-environment-variables-env)
-  * [Installing Dependencies](#installing-dependencies)
-  * [Running the Application](#running-the-application)
-  * [Using Docker (Optional)](#using-docker-optional)
-* [Final Considerations](#final-considerations)
+  * [1.1 What it does 🚀](#what-it-does-)
+  * [1.2 Problem it solves 💡](#problem-it-solves)
+  * [1.3 Target Audience 🎯](#target-audience-)
+  * [1.4 Highlights 🔥](#highlights)
+* [2. Main Features](#-main-features)
+* [3. Key Technologies Used](#-key-technologies-used)
+* [4. Project Structure](#-project-structure)
+* [5. Dependency Structure](#-dependency-structure)
+* [6. Requirements](#-requirements)
 
-## Architecture Overview
+  * [6.1 Software & Tools](#-software--tools)
+  * [6.2 Project Dependencies](#-project-dependencies)
+* [7. How to run the project locally](#-how-to-run-the-project-locally)
 
-The **fastapi-clean-architecture-ddd-template** architecture is structured to clearly separate the responsibilities of each part of the application, in a manner similar to Clean Architecture. This means that **business rules and domain logic** are isolated from infrastructure details or external interfaces. At a high level, we adopt the following layers:
+  * [7.1 Path A — Local environment with uv (recommended)](#path-a--local-environment-with-uv-recommended)
+  * [7.2 Path B — Docker / Docker Compose](#path-b--docker--docker-compose)
+* [8. Available Endpoints](#-available-endpoints)
 
-* **Domain:** Contains business entities, pure business rules, value objects, and domain services. This layer is independent of any external framework or implementation detail. It represents the core of the application (the reason the software exists) and should have no external dependencies.
-* **Application:** Implements the application's **use cases**. It orchestrates domain operations, coordinating data between the input interface (e.g., the API) and the domain. This layer also defines **interfaces (ports)** that the domain/application expects to perform certain tasks (e.g., data repositories). The Application layer depends only on the Domain layer (e.g., knows about entities and repository interfaces) and is unaware of infrastructure details.
-* **Infrastructure:** Provides concrete implementations for the interfaces defined in the Application (or Domain) layer. This includes details such as database access, external API calls, ORM database models, email sending, AI service integration, etc. The Infrastructure layer **depends** on the Domain and Application layers (e.g., imports entities or interfaces to implement repositories), but not the other way around. This layer handles *how* things are persisted or communicated externally.
-* **Presentation:** Also called the interface or user interface layer. In the context of a web API, this is where **FastAPI controllers** or **routers**, **schemas** (Pydantic models) for API input and output, and request **dependencies** (like repository injection, authentication, etc.) are defined. This layer receives user requests (HTTP), validates data, invokes the appropriate use cases in the Application layer, and returns the HTTP response. It depends on the Application and Domain layers (e.g., uses use cases, domain schemas), but should not contain business logic.
+  * [8.1 Authentication](#-authentication)
+  * [8.2 Overview](#-overview)
+  * [8.3 POST /api/v1/example/ — Operation Example](#1-post-apiv1example--operation-example)
+  * [8.4 GET /healthz — Health Check](#2-get-healthz--health-check)
+  * [8.5 GET / — Redirect to /docs](#3-get--redirect-to-docs)
+  * [8.6 GET /docs & /redoc — Documentation](#4-get-docs--redoc--documentation)
+* [9. Frequently Asked Questions (FAQ)](#-frequently-asked-questions-faq)
+* [10. How to contribute](#-how-to-contribute)
 
-In addition to these main layers, the project has a **Core Configuration** for cross-cutting concerns (such as settings, database connections, logging, common security, etc.), and supporting structures for documentation, development scripts, and tests.
+  * [10.1 Contribution flow](#-contribution-flow)
+  * [10.2 Branch & Commit Conventions](#-branch--commit-conventions)
+  * [10.3 Code Quality & Style](#-code-quality--style)
+  * [10.4 Environment Variables & Secrets](#-environment-variables--secrets)
+  * [10.5 Pull Requests (PRs)](#-pull-requests-prs)
+  * [10.6 Pre-PR Checklist](#-pre-pr-checklist)
+* [11. License](#-license)
+* [12. Authors](#-authors)
 
-This separation brings several benefits:
+---
 
-* **Maintainability:** Changes in business rules (domain) do not affect external details and vice versa. Each concern is isolated.
-* **Testability:** Business logic can be tested in isolation by mocking or stubbing infrastructure dependencies via interfaces.
-* **Flexibility and Extensibility:** Infrastructure implementations (e.g., switching the database or AI provider) can be changed without refactoring business logic, by simply providing a new implementation of the expected interface.
-* **Feature-Based Organization:** The `app/modules` folder allows grouping code related to a specific business context (module) in one place, rather than in globally separated layers. Each module contains its own sub-layers (domain, application, etc.), making it easier to find everything related to that feature.
+## 📝 General Description
 
-In summary, the proposed architecture follows the principle of **dependency inversion**: inner layers know nothing about outer layers, and system dependencies always point from outer to inner layers (Presentation → Application → Domain, and Infrastructure → Domain/Application). Below, we detail the entire folder and file structure of the project and the role of each.
+**FastAPI API Key Authentication** is a sample application created to show, in practice, how to protect **FastAPI** API endpoints using an **API Key**. It serves as a starting point for building **microservices** or **internal APIs** that need a simple authentication layer without implementing full OAuth2 or JWT flows.
 
-## Folder and File Structure
+### What it does 🚀
 
-The following is the directory and file structure of the project, as found in the repository:
+1. **Validates** all requests hitting protected endpoints, ensuring they include a valid **API Key** header before running business logic.
+2. **Demonstrates** a layered project structure (Clean Architecture), serving as a model for creating new endpoints and modules in a decoupled manner.
+3. **Provides** standardized JSON responses, including metadata (HTTP code, path, timestamp) for both success and error cases, simplifying consumption and debugging.
+4. **Documents** the API automatically using FastAPI’s **Swagger UI** (interactive interface available at `/docs`) for quick route testing.
+5. **Includes** production-ready utilities like a *health check* endpoint (`/healthz`) for monitoring and easy environment configuration via a `.env` file.
+
+### Problem it solves 💡
+
+Many web applications must expose APIs quickly and securely, either for internal microservice consumption or for offering services to external clients. Implementing a simple authentication scheme from scratch can lead to security pitfalls (e.g., checks vulnerable to *timing attacks*) or to an unstructured architecture as the project grows.
+
+This template addresses these challenges by:
+
+* **Providing a minimalist, ready-to-use authentication solution** (API Key), avoiding the setup of OAuth2 or other methods when not needed.
+* **Establishing an organized codebase**, enabling project evolution with well-defined modules without mixing business rules with infrastructure details.
+* **Ensuring basic security** by using secure string comparison (`secrets.compare_digest`) and consistent error returns (401 with appropriate headers), aligned with HTTP best practices.
+
+### Target Audience 🎯
+
+| User Profile                         | What they gain from this project                                                                                        |
+|--------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| **Backend Developers**               | A cohesive starting point to create structured, secure APIs with API Key.                                               |
+| **Internal API Teams**               | A consistent model to standardize authentication between microservices and ensure only authorized services access data. |
+| **FastAPI Beginners**                | A practical example of organizing a complex FastAPI project (multiple layers) cleanly, with integrated auth and docs.   |
+| **Tech Leads / Software Architects** | A reference blueprint to spread best practices for structuring Python projects and deploying simple security measures.  |
+
+### Highlights 🔥
+
+* **Easy to Customize**: API Key header name and the key value itself are defined via `.env`, enabling quick adaptation to environments or security policies.
+* **Global Auth via Dependency/Middleware**: All routes (except explicitly public ones) can be protected at once using global dependencies or middleware—making it easy to extend security to new endpoints.
+* **Unified Standard Response**: A consistent response model (`StandardResponse`) wraps user data and metadata (status, method, etc.), simplifying logs and monitoring.
+* **Docker-ready**: *Dockerfile* and *docker-compose* provided for containerized execution, speeding up local testing and deployments in standardized environments.
+* **Fast Development Loop**: Hot-reload in development (Uvicorn or FastAPI CLI) and preconfigured lint/format (Ruff) for quick feedback and consistent code.
+* **Test-ready**: Automated testing structure (Pytest) to make unit and integration testing straightforward as the project grows.
+
+## ⚙️ Main Features
+
+| #     | Feature                    | What it does                                                                                                   | Technical/Usability Differentials                                                                                                                |
+|-------|----------------------------|----------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| **1** | **API Key Authentication** | Restricts API access to requests presenting the correct key in the header.                                     | 🔐 Secure verification using `secrets.compare_digest` to prevent timing attacks. Customizable header (default: **X-API-Key**).                   |
+| **2** | **Example Endpoint**       | Provides an illustrative route (e.g., `/api/v1/example/`) that can serve as a model for implementing features. | 🛠️ Practical application of **Clean Architecture** (layers for *domain*, *use case*, *presentation*) and **Pydantic** for data validation.      |
+| **3** | **Health Check**           | Exposes a public `/healthz` endpoint for quick service checks (used by orchestrators, Kubernetes, etc.).       | ❤️ Follows the 12‑Factor App style; easily integrates with load balancers or uptime monitoring systems.                                          |
+| **4** | **Interactive Docs**       | Offers Swagger/OpenAPI via `/docs` (Swagger UI) and `/redoc` (ReDoc).                                          | 📖 Test API calls directly in the browser, including providing the API Key through Swagger’s **Authorize** button.                               |
+| **5** | **Standardized Responses** | All success/error responses follow a unified schema (`code`, `method`, `path`, `timestamp`, `details{...}`).   | 📊 Makes logging and auditing easier; clients and developers always handle a consistent response format.                                         |
+| **6** | **Structured Logging**     | Logs each request with important info (execution time, status, origin) and `X-Request-ID` identification.      | 📑 Based on **Loguru** for JSON output; easy integration with observability tools (ELK, Graylog, etc.) and readable stack traces (Stackprinter). |
+
+---
+
+## 🧰 Key Technologies Used
+
+| Technology              | Version         | Role in the Project                                                        | Why it was chosen                                                                                                     |
+|-------------------------|-----------------|----------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| **Python**              | 3.13            | Main language; native async support.                                       | Vast ecosystem and simple syntax, plus performance improvements with each version.                                    |
+| **FastAPI**             | 0.115.13        | ASGI web framework for building REST APIs.                                 | Excellent performance (comparable to Node.js and Go) and automatic documentation generation (Swagger UI).             |
+| **Pydantic v2**         | 2.11.7          | Data modeling and validation (request/response models, configs).           | Declarative and fast validations (Rust core), ensuring reliable data in the API.                                      |
+| **Uvicorn & Hypercorn** | 0.34.x / 0.17.3 | ASGI servers to run the app (Uvicorn in dev, Hypercorn optional for prod). | Modern features (HTTP/2, WebSockets); hot reload in dev and high performance in production.                           |
+| **Orjson**              | 3.11.0          | Ultra-fast JSON serialization for HTTP responses.                          | Up to 3x faster than Python’s stdlib JSON, improving API latency.                                                     |
+| **Loguru**              | 0.7.3           | Simple, structured logging.                                                | Friendly API, per-request formatting, flexible sinks (console, file, etc.).                                           |
+| **Pydantic Settings**   | 2.10.1          | Read configs and secrets from `.env` or environment variables.             | Embraces *12-Factor* principles: configuration outside code with automatic type parsing.                              |
+| **Pytest**              | 8.4.1 (dev)     | Testing framework.                                                         | Concise tests with fixtures; asyncio support makes testing FastAPI functions easy.                                    |
+| **Ruff**                | 0.12.0 (dev)    | Python linter and formatter.                                               | Bundles dozens of checks (Flake8, Black-style formatting, etc.) in one ultra-fast tool for consistent code standards. |
+
+> 🔒 **Dependency Security:** All versions are pinned in `requirements.txt` and `uv.lock` for reproducible builds. Only essential libraries are included to minimize attack surface and performance overhead.
+
+## 🗂️ Project Structure
+
+<details>
+<summary><strong>🌳 Directory tree (simplified)</strong></summary>
 
 ```text
-fastapi-clean-architecture-ddd-template
-├── .env
-├── .env.example
-├── .git/
-├── .gitignore
-├── .python-version
-├── .venv/
-├── Dockerfile
-├── LICENSE
-├── README-PTBR.md
-├── README.md
-├── app
-│   ├── __init__.py
-│   ├── app.py
-│   ├── core
-│   │   ├── __init__.py
-│   │   ├── database.py
-│   │   ├── exception_handler.py
-│   │   ├── exceptions.py
-│   │   ├── logging.py
-│   │   ├── middleware.py
-│   │   ├── resources.py
-│   │   ├── schemas.py
-│   │   ├── security.py
-│   │   ├── settings.py
-│   │   └── utils.py
-│   └── modules
-│       ├── __init__.py
-│       └── example
-│           ├── __init__.py
-│           ├── application
-│           │   ├── __init__.py
-│           │   ├── interfaces.py
-│           │   ├── use_cases.py
-│           │   └── utils.py
-│           ├── domain
-│           │   ├── __init__.py
-│           │   ├── entities.py
-│           │   ├── mappers.py
-│           │   ├── services.py
-│           │   └── value_objects.py
-│           ├── infrastructure
-│           │   ├── __init__.py
-│           │   ├── models.py
-│           │   └── repositories.py
-│           └── presentation
-│               ├── __init__.py
-│               ├── dependencies.py
-│               ├── docs.py
-│               ├── exceptions.py
-│               ├── routers.py
-│               └── schemas.py
-├── docker-compose.yaml
-├── docs/
-├── pyproject.toml
-├── requirements.txt
-├── scripts
-│   ├── __init__.py
-│   └── directory_tree.py
-├── test
-│   ├── __init__.py
-│   ├── core
-│   │   └── __init__.py
-│   └── modules
-│       ├── __init__.py
-│       └── example
-│           └── __init__.py
-└── uv.lock
+fastapi-apikey-authentication/
+├── app/
+│   ├── app.py               # Initializes the FastAPI instance and includes routes
+│   ├── core/                # "Core" features (infrastructure & cross-cutting)
+│   │   ├── security.py      # API Key auth logic (Dependency)
+│   │   ├── middleware.py    # Response formatting and logging middleware
+│   │   ├── exception_handler.py  # Global HTTP exception handling
+│   │   ├── settings.py      # App configuration (Pydantic BaseSettings)
+│   │   ├── schemas.py       # Reusable generic schemas (e.g., StandardResponse)
+│   │   ├── exceptions.py    # Custom exceptions
+│   │   ├── logging.py       # Loguru logger configuration
+│   │   ├── resources.py     # Misc resources (e.g., error texts or constants)
+│   │   └── utils.py         # General utilities
+│   └── modules/             # Business modules (each folder is an isolated context)
+│       ├── example/         # Example module (demonstration feature)
+│       │   ├── domain/      # Business rules, entities, mappers (if applicable)
+│       │   ├── application/ # Use cases (orchestration between domain and presentation)
+│       │   └── presentation/ # Interface (FastAPI routers, request/response schemas, docs)
+│       │       ├── routers.py       # Example endpoints/routes definition
+│       │       ├── schemas.py       # Pydantic schemas for the example’s request/response
+│       │       ├── dependencies.py  # Example-specific dependencies (injections)
+│       │       ├── docs.py          # Descriptions & examples (used in OpenAPI) for the module
+│       │       └── exceptions.py    # Example domain-specific exceptions
+│       └── health/          # Health check module (system domain)
+│           ├── application/ # (Could include subsystem checks if needed)
+│           └── presentation/
+│               ├── routers.py       # Health route (`/healthz`)
+│               ├── schemas.py       # Health response schema (e.g., status)
+│               ├── docs.py          # Health endpoint documentation
+│               └── exceptions.py    # (n/a — health rarely needs custom exceptions)
+├── .env.example            # Environment config example (copy to .env)
+├── Dockerfile              # Build recipe for the app’s Docker image
+├── docker-compose.yaml     # Defines service for local run (includes the app)
+├── pyproject.toml          # Project metadata and dependencies (PEP 621)
+├── requirements.txt        # Pinned (frozen) dependency list
+├── uv.lock                 # Dependency lockfile (generated by uv)
+├── scripts/
+│   └── directory_tree.py   # Utility script to generate the directory tree
+├── test/                   # Tests (unit/integration)
+│   ├── core/               # (e.g., tests for core utilities)
+│   └── modules/            # (e.g., tests for each business module)
+└── README.md               # Main repository documentation
 ```
 
-Next, we explain each part of this structure in detail:
+</details>
 
-### Project Root
+| Layer/Folder            | Responsibility/Role                                                                         | Details                                                                                                                                                                                                                      |
+|-------------------------|---------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **`app/app.py`**        | Initializes the FastAPI app, sets global definitions, and includes routes from all modules. | The application “entry point”. Imports each module’s routers and adds middlewares (such as global authentication, if configured).                                                                                            |
+| **`app/core/`**         | Core module with reusable components and configurations spanning the whole project.         | Contains auth logic, response formatting, error capture, *12‑Factor* settings, and other utilities independent of business rules.                                                                                            |
+| **`app/modules/`**      | Each subfolder represents an isolated **business context** (DDD).                           | Enables adding new domains/features without conflicting with existing ones. E.g., **example** (didactic) and **health** (systemic) modules.                                                                                  |
+| **`.../presentation/`** | **Presentation** layer: where Clean Architecture controllers live (here, FastAPI routers).  | Defines endpoints, performs initial validation via Pydantic schemas, and returns responses using model classes. Also includes descriptions (docs.py) shown in Swagger UI.                                                    |
+| **`.../application/`**  | **Application** layer: implements use cases or interactors.                                 | Orchestrates calls between presentation and domain layers. In the example module, it could process input data, call domain services, and shape the final response.                                                           |
+| **`.../domain/`**       | **Domain** layer: business rules, entities, and repository contracts.                       | Ideally infrastructure-agnostic. In the example module, it holds classes/functions representing the core business logic. In larger templates, this is where repository interfaces and external service contracts would live. |
+| **Config files**        | (root) `Dockerfile`, `docker-compose.yaml`, etc.                                            | Enable containerization and consistent execution across environments.                                                                                                                                                        |
+| **`test/`**             | Automated test suite (initially illustrative).                                              | Makes it easy to expand coverage as features grow (e.g., authentication tests and example endpoint tests).                                                                                                                   |
 
-At the root of the repository are configuration files, environment files, and general project documentation:
+> 🧩 **Note:** The layered structure (presentation, application, domain) doesn’t prevent an endpoint from calling logic directly, but it encourages separation of concerns. For simple features, the application layer can be minimal; for complex cases, this pattern helps keep code organized.
 
-* **.env:** Environment variable file (not versioned) that stores sensitive or environment-specific settings (e.g., credentials, database URLs, API key configs). This file is read by the application (via `pydantic-settings`) to configure runtime parameters. Each developer can have their own local `.env` with settings appropriate for their environment.
-* **.env.example:** Sample environment file, containing only expected variable names and example or empty values. Serves as documentation for what variables need to be defined in the actual `.env` file, without exposing sensitive data. Best practice is to copy this file to `.env` and fill in the necessary values.
-* **.gitignore:** List of file and folder patterns Git should ignore (not version). Usually includes `*.env`, virtual environment files (`.venv/`), cache files, build artifacts, etc., to avoid committing sensitive or irrelevant files.
-* **.git/**: Git’s internal directory containing all repository history and configuration. *(You don’t manually interact with this folder; Git manages it.)*
-* **.python-version:** File specifying the Python version used by the project (e.g., `3.13.x`). This can be used by tools like **pyenv** or the **uv** manager to automatically activate the correct Python version when entering the project directory. It ensures the project runs with the proper Python version.
-* **.venv/**: Virtual environment directory where Python project dependencies are installed locally. This is created and managed by the **uv** package manager (or other tools). It contains the Python binaries and all packages installed for the project, isolated from the global system. This directory is ignored by Git.
-* **Dockerfile:** Configuration file for **Docker** that defines how to build a container image of the application. It specifies the base image (typically Python), copies project files, installs dependencies (using `pyproject.toml`/`uv.lock`), and sets the startup command (usually running a Uvicorn server for the FastAPI app). With the Dockerfile, a backend container image can be created, facilitating deployment in standardized environments.
-* **docker-compose.yaml:** Configuration file for **Docker Compose** describing how to run multi-service containers. In this project, `docker-compose.yaml` can orchestrate the application container (defined by the Dockerfile) along with other services the backend may require, such as a database or cache. For example, a PostgreSQL or Redis service can be configured here for development. This file simplifies spinning up the entire dev/production environment with a single command.
-* **README.md:** Project documentation (this file). Contains architectural explanations, usage instructions, etc., serving as a guide for developers using or maintaining the template.
-* **requirements.txt:** List of project dependencies. Used to install project dependencies in environments that do not support `pyproject.toml` directly (e.g., some servers or tools). It contains the exact versions of installed packages, allowing reproducibility. However, the preferred approach is to use `pyproject.toml` with the **uv** manager.
-* **pyproject.toml:** Project configuration file, following the [PEP 621](https://peps.python.org/pep-0621/) standard and used by the **uv** package manager (and also supported by build tools like Poetry, etc.). This file defines:
+---
 
-  * Project metadata (name, version, description).
-  * Project dependencies (required libraries like FastAPI, Pydantic, etc.).
-  * Optional dependency groups, e.g., `dev` for development dependencies (in this project, the Ruff linter is listed here).
-  * README file as the main document.
-  * Minimum required Python version.
+## 🧬 Dependency Structure
 
-  The `pyproject.toml` replaces the old `requirements.txt` and setup.py, centralizing package/project information. **Important:** Exact versions of each dependency are not usually specified here (only minimums or ranges); exact version control is handled by the lock file (`uv.lock`).
-* **uv.lock:** Lock file automatically managed by **uv**. It lists **all** installed dependencies (including transitive dependencies) with exact versions and hashes, ensuring environment reproducibility. You **should not edit** this file manually; it’s updated via `uv` commands (like `uv sync` or `uv lock`). The `uv.lock` file should be committed so that other developers get the same package versions when syncing the project.
+Project dependencies are managed via **pyproject.toml** (PEP 621) and a lockfile (`uv.lock`) for consistency. Below is an overview of key libraries and subcomponents:
 
-### `app/` Directory (Application)
+```text
+fastapi-apikey-authentication (template) v1.0.0
+├─ fastapi[standard] v0.115.13
+│   ├─ pydantic v2.11.7
+│   ├─ starlette v0.46.2
+│   ├─ email-validator, python-multipart, httpx, jinja2... (FastAPI extras)
+│   └─ uvicorn[standard] v0.34.3 (web server + reload)
+├─ hypercorn v0.17.3          (alternative ASGI server, e.g., for HTTP/2)
+├─ loguru v0.7.3             (structured logging)
+├─ orjson v3.11.0            (high‑performance JSON serialization)
+├─ pydantic-settings v2.10.1 (BaseSettings-based configuration management)
+├─ stackprinter v0.2.12      (readable traceback formatting)
+├─ pytest v8.4.1 [dev]       (testing framework)
+└─ ruff v0.12.0 [dev]        (all-in-one linter/formatter)
+```
 
-The `app/` directory contains all of the application’s **Python** source code. It is a Python package (note the `__init__.py` file inside) and houses both the FastAPI application instance and the sub-modules organized by functional domain. In larger projects we might have multiple application packages, but here we use a single `app` package to gather everything in the backend.
+**Notes:**
 
-Main components inside `app/`:
+* Packages marked `[dev]` are for development only, not required in production.
+* FastAPI is installed with the `[standard]` extra, bundling useful tooling like uvicorn (server) and utilities (email-validator, jinja2, etc.) for faster prototyping.
+* `requirements.txt` is generated from the lockfile and pins exact versions (ensuring all developers/environments use the same versions).
+* There are no external DB or third-party auth dependencies—the goal is to keep it simple. If your use case requires integrations, add them as needed while keeping the modular organization.
 
-* **`app.py`:** The main FastAPI application file—the backend **entry point**. Inside it we typically instantiate the FastAPI app and include the routes defined in the various modules. For example:
+---
 
-  * Creates the object `app = FastAPI(...)`, configuring title, version, etc.
-  * Loads initial settings (e.g., setting log level from `core/logging.py`, or reading configs from `core/config.py`).
-  * Includes each module’s routers using `app.include_router(...)`, registering the routes from the different parts of the API. In our case it will include the router from the example module (and, in the future, from other modules).
-  * Defines startup or shutdown event handlers if needed (e.g., a `startup` function to connect to the database via `core/database.py`, or `shutdown` to close connections).
+## 🧾 Requirements
 
-  In short, `app.py` assembles the application by composing pieces defined elsewhere. This file (more precisely, the `app` object in it) is what you point to when running the server.
+### 📦 Software & Tools
 
-* **`__init__.py`:** An empty (or nearly empty) file whose only purpose is to mark `app` as a Python package. There’s no need to put logic here, though you could use it to set up global imports if desired (keeping it empty for simplicity is fine).
+To run and develop this project, ensure you have:
 
-#### `app/core/` Directory (Central Configuration)
+| Item                     | Version / Notes                       |          Required?           | Description / Use                                                                                                                               |
+|--------------------------|---------------------------------------|:----------------------------:|-------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Python**               | >= 3.13 (compatible with 3.13+)       |              ✅               | Python interpreter to run the app. Newer versions ensure better performance and compatibility with Pydantic v2.                                 |
+| **uv** (deps CLI)        | Latest stable (optional)              |              ⚠️              | Recommended dependency/venv manager. Eases venv creation and `uv.lock` sync. ([install](https://astral.sh/uv/))                                 |
+| **Git**                  | Any recent version                    |              ✅               | Version control to clone the repo and manage source code.                                                                                       |
+| **Docker** + **Compose** | Docker Engine 20+ / Docker Compose 2+ | ✔️ (for deploy) ⚠️ (for dev) | To run in containers (optional for dev but recommended to ensure environment parity).                                                           |
+| **Editor/IDE**           | VSCode, PyCharm, etc. (suggested)     |              ✅               | A good editor boosts productivity. This project includes ready-to-use lint config (Ruff) that integrates with your editor for instant feedback. |
 
-The `app/core` package contains foundational configuration modules and utilities for the application. These are low-level or cross-cutting components that are usually used by multiple parts of the system. Details of the files inside `core/`:
+*Note:* Using **uv** (by Astral) is encouraged to simplify environment and dependency management (similar to `pipenv` or `poetry`). You can also use traditional *pip/venv*—just follow `requirements.txt`.
 
-* **`core/database.py`:** Module responsible for setting up the database connection or other persistent data resources. For example, if we use SQLAlchemy, this is where we might instantiate the connection engine using the DB URL from the settings (`settings.database_url`), create a sessionmaker, and provide utility functions to obtain a session (to be used as a FastAPI dependency). If we don’t use a relational DB, this module could configure a NoSQL connection, or—if the app is AI-focused—manage a vector store, etc. In short, it’s the central point for initializing and sharing data connections. For example:
+### 🔧 Project Dependencies
 
-  ```python
-  from sqlalchemy import create_engine
-  from sqlalchemy.orm import sessionmaker
-  from app.core.settings import settings
+* **Main Libraries:** Already listed above (FastAPI, Pydantic, etc.). All installed via `pip` or `uv` from `pyproject.toml`.
+* **Development Libraries:** Include `pytest` (to run tests) and `ruff` (lint/format). Not required in production but recommended during development to keep code quality high.
+* **External Services:** None consumed in this app. Authentication is performed locally by comparing the provided key with the one configured in environment variables. If needed, integrate DBs or external APIs in new modules, following the template’s pattern.
 
-  engine = create_engine(settings.database_url)
-  SessionLocal = sessionmaker(bind=engine)
+### 🖥️ Environment Configuration
 
-  def get_db():
-      db = SessionLocal()
-      try:
-          yield db
-      finally:
-          db.close()
-  ```
+* **Environment Variables:** Rename `.env.example` to `.env` and set values as needed. Main parameters include:
 
-  In contexts without a database this file may remain minimal or empty, but it’s ready to integrate persistence cleanly.
+  * `SECURITY_API_KEY_HEADER` – Header name that carries the API Key (default: `X-API-Key`).
+  * `SECURITY_API_KEY` – The secret API Key value to accept. (Set a strong value in production; the example file contains a placeholder for development.)
+  * Other parameters: (e.g., `LOG_LEVEL`, `APP_ENV`) as defined in `core/settings.py`, which may change logging behavior or environment-specific settings.
+* **Application Port:** By default, the app runs on **8000** (see `docker-compose.yaml` and instructions below). You can change it with the `--port` flag or by adjusting the Docker Compose port mapping.
+* **Debug Mode:** In development, **auto-reload** is enabled (when using uvicorn via `uv run` or `fastapi dev`). In production, disable debug and reload for better performance.
 
-* **`core/exception_handler.py`:** Defines global exception handlers for the application. Here we can configure how FastAPI should handle unhandled errors, converting specific exceptions into appropriate HTTP responses. For instance, we can catch validation exceptions and return 422 errors, or convert DB errors into 500s. This centralizes error handling and ensures all parts of the app follow a consistent pattern. A simple example:
+---
 
-  ```python
-  from fastapi import Request, HTTPException
-  from fastapi.responses import JSONResponse
+## ▶️ How to run the project locally
 
-  async def http_exception_handler(request: Request, exc: HTTPException):
-      return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
-  ```
+You can run the application locally in two ways: directly in a Python environment (ideal for development) or using Docker (useful to test in an isolated environment or produce a deployable image).
 
-  In `app.py`, we register this handler with `app.add_exception_handler(HTTPException, http_exception_handler)`.
+### Path A — **Local environment with uv (recommended)**
 
-* **`core/exceptions.py`:** Defines a base class to be inherited by custom application exceptions (usually inheriting from `Exception` or `BaseException`). These custom exceptions can represent domain-specific or business-logic errors, allowing us to treat those cases differently. For example, we might have a `DomainError` exception raised when a business rule fails, which the global handler converts into a suitable HTTP error.
+1. **Install `uv` (Astral’s env & deps manager):**
 
-  ```python
-  class DomainError(Exception):
-      """Base exception for domain errors."""
-      pass
-  ```
+   * **Linux/macOS (via cURL):**
 
-* **`core/logging.py`:** Sets up the application’s global **logging** configuration. Before the server starts we want to configure how logs will be formatted and what detail level will be shown (info, debug, error, etc.). This file uses Python’s built-in `logging` module to configure handlers, formatters, and levels. For example, we can define a unified log format or integrate the `loguru` library if preferred. At app startup (`app.py`), we call the logging setup function. A possible content:
+     ```bash
+     curl -LsSf https://astral.sh/uv/install.sh | sh
+     ```
+   * **Windows (PowerShell):**
 
-  ```python
-  import logging
+     ```powershell
+     iwr https://astral.sh/uv/install.ps1 -UseBasicParsing | iex
+     ```
 
-  LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+   *If you prefer, check the [official uv docs](https://github.com/astral-sh/uv) for alternative installation methods.*
 
-  def setup_logging():
-      logging.basicConfig(level=logging.INFO, format=LOG_FORMAT)
-      # ... additional settings if needed
-  ```
+2. **Clone this repository and move into the project folder:**
 
-  This way, when the application starts we call `setup_logging()` and ensure well-formatted logs at the correct level. A solid log configuration is crucial for debugging and production monitoring.
+   ```bash
+   git clone https://github.com/BrunoTanabe/fastapi-apikey-authentication.git
+   cd fastapi-apikey-authentication
+   ```
 
-* **`core/middleware.py`:** Defines global middlewares for the application. Middlewares are functions that intercept requests and responses, allowing you to add common behaviors such as authentication, request logging, CORS handling, etc. In this file we can define middlewares applied to every route. For example, a middleware to log each received request and its response:
+3. **Create a Python virtual environment:**
 
-  ```python
-  from fastapi import Request
-  from starlette.middleware.base import BaseHTTPMiddleware
+   ```bash
+   uv venv .venv
+   ```
 
-  class LoggingMiddleware(BaseHTTPMiddleware):
-      async def dispatch(self, request: Request, call_next):
-          response = await call_next(request)
-          # Here you can log request/response details
-          return response
-  ```
+   This creates a `.venv` at the project root. (Optionally, use `python -m venv .venv` and `source .venv/bin/activate` instead.)
 
-  In `app.py`, we register this middleware with `app.add_middleware(LoggingMiddleware)`.
+4. **Install production dependencies:**
 
-* **`core/resources.py`:** Module for managing static resources or configuration files the application may need. For example, if the app uses HTML templates, static files (CSS, JS), or additional config files, we can define functions here to load those resources. This centralizes access to non-code files required by the app. It can also initialize and tear down resources like external service connections (e.g., third-party APIs) that aren’t databases.
+   ```bash
+   uv sync
+   ```
 
-* **`core/schemas.py`:** Defines **Pydantic schemas** inherited by other parts of the app. Schemas are used for validating input and output data, especially in APIs. Here we can define common schemas reused across multiple modules, such as `BaseResponse`, `ErrorResponse`, or other generics that don’t belong to a specific module. For example:
+   This reads `pyproject.toml` and installs all specified dependencies, honoring versions pinned in `uv.lock`. You’ll get FastAPI, Uvicorn, and the rest.
 
-  ```python
-  from pydantic import BaseModel
+5. **(Optional) Also install development dependencies:**
 
-  class BaseResponse(BaseModel):
-      success: bool
-      message: str | None = None
-  ```
+   ```bash
+   uv sync --group dev
+   ```
 
-  These schemas can be imported and used in different modules to ensure consistency in response structure.
+   This includes `pytest` and `ruff`. Not required to run the app, but useful for testing and maintaining code quality.
 
-* **`core/security.py`:** Module for **shared security** functionality. For example, utilities for password hashing, JWT generation and verification, CORS policies, authentication contexts, etc. The idea is to centralize security aspects used in multiple modules.
-
-  * If the app requires user authentication, this file might include functions to create/verify JWT tokens (e.g., with `python-jose`), functions to hash/verify passwords (e.g., with `passlib`).
-  * It can also define OAuth credentials or authorization scopes.
-
-  **Note:** Route-specific auth/authorization may be configured in the *routers* (presentation layer), but generic support functions (like verifying a token signature, fetching the current user from the token, etc.) can live here in core. This avoids repetition and ensures the same security utilities are used throughout the project.
-
-In summary, `app/core/` hosts code that is cross-cutting and domain-agnostic, forming the foundation of the entire application.
-
-* **`core/settings.py`:** Application **configuration** module. Here we define classes and objects that load environment variables (e.g., using `pydantic_settings.BaseSettings`). In a typical FastAPI project this file defines a `Settings` class with attributes for every needed configuration (e.g., `APP_NAME`, `DEBUG`, `DATABASE_URL`, API credentials, etc.). The `Settings` class loads values from the `.env` file by default. A simplified example:
-
-  ```python
-  from pydantic_settings import BaseSettings
-
-  class Settings(BaseSettings):
-      app_name: str = "FastAPI Clean Architecture DDD Template"
-      debug: bool = False
-      database_url: str  # etc., other config fields...
-      class Config:
-          env_file = ".env"
-
-  settings = Settings()
-  ```
-
-  Other parts of the code then import `settings` to access configurations (e.g., `settings.database_url`). This pattern centralizes all configs in one place and lets you change behavior via environment variables without altering code. Remember to keep secrets (e.g., secret keys) only in the .env and not commit them.
-
-* **`core/utils.py`:** Module for general utility functions that don’t fit elsewhere. Here we can place helper functions used in multiple places within `core`, such as string formatting, date manipulation, generic validations, etc. The goal is to avoid code duplication and centralize simple logic that can be reused.
-
-#### `app/modules/` Directory (Feature Modules)
-
-This directory is where we organize code by **feature or domain context**. Each sub-folder inside `modules` represents a **module** or **bounded context** of the application, encapsulating domain logic, use cases, interfaces, and infrastructure details related to that functionality.
-
-For example, we might have modules like `users`, `orders`, `payments`, `recommendation`, etc., each containing its entities, use cases, repositories, routes, etc. In our template we have an example module called **`example/`** that demonstrates the structure. New modules to be created in the future should follow the same internal organization pattern.
-
-Structure of a typical module (using the `example` module as a model):
-
-##### Example Module: `app/modules/example/`
-
-The **example** module was generated as a reference and starting point. It implements the suggested architecture within a fictional “example” domain. Inside it there are sub-folders for each logical layer of the module:
-
-* **application/** – Application layer (use cases and interfaces).
-* **domain/** – Domain layer (entities and business logic).
-* **infrastructure/** – Infrastructure layer (persistence details, external APIs, etc.).
-* **presentation/** – Presentation layer (FastAPI endpoints, request/response schemas, dependency injection).
-
-Each sub-folder contains specific files as described below:
-
-###### Domain
-
-This sub-folder defines the core business rules of the module. The files here describe **what** the principal domain concepts are and how they behave, with no dependency on external details (database, FastAPI, etc.).
-
-* **`entities.py`:** Defines the module’s **Domain Entities**. Entities are classes or structures representing the fundamental business objects the module deals with, including their attributes and possibly basic internal logic. For example, in a user module we could have a `User` entity with id, name, email, and methods to verify a password or change a profile. Entities should encapsulate invariants and simple rules related to themselves.
-
-  In Python, entities can be implemented as normal classes or even dataclasses, depending on need. The important thing is that they don’t depend on how they are stored or displayed—they are purely business models. In an AI context, if this module involved something like a “Model” or “Dataset,” those could be entities as well (representing configuration or state of those objects).
-
-* **`mappers.py`:** This file contains functions or classes that convert domain entities to formats suitable for persistence (such as ORM models) and vice versa. For instance, if we’re using SQLAlchemy, here we could have functions that transform a `User` entity into a `UserModel` SQLAlchemy model and another function that does the reverse. This keeps entities pure and decoupled from persistence details.
-
-  Mappers are useful to keep conversion logic centralized, avoiding code duplication in repositories or services. If the module doesn’t require complex mapping, this file can be omitted or stay empty.
-
-* **`value_objects.py`:** Contains definitions of types or classes that represent domain values with their own logic or invariants but no unique identity like entities. In Domain-Driven Design, **Value Objects** are immutable and compared by value, not by identity.
-
-  Common examples: a CPF, an Email, a monetary amount, coordinates, etc., which you might represent with their own class to enforce formatting or validation. In this file you can define classes for such specific values, encapsulating checks (e.g., an `Email` class that validates format in the constructor). In the example module we might have something like a `Score` or another demonstrative VO.
-
-  Keeping value objects separate helps make the code more expressive and ensures domain data integrity. If your domain doesn’t have complex value objects, this file can remain empty or be omitted, but the structure is ready if needed.
-
-* **`services.py`:** This file gathers **complex domain logic** that doesn’t fit within a single entity or concerns interaction between multiple entities. Domain Services are functions or classes implementing business rules using entities and value objects, but that don’t belong exclusively to any specific entity.
-
-  For example, in a financial domain we might have a domain service to calculate interest or validate a transaction between two accounts (involving two `Account` entities). In an AI context there could be a domain service to run an inference pipeline or combine results from multiple models, if that is considered part of the domain rather than mere infra.
-
-  These domain services **should still not access infrastructure**. They operate on domain objects loaded into memory (probably by repositories) and apply pure logic to them. If they need data from outside or must save results, they should receive that data via parameters or return results for higher layers (application) to persist.
-
-  In short, put in `services.py` business rules involving more elaborate logic or multiple objects, keeping entity code lean.
-
-###### Application
-
-The `application` sub-folder implements the module’s **use cases** and defines **interfaces (ports)** that connect the application layer with other layers. This layer orchestrates the actions required to fulfill operations requested from the outside world (e.g., an API endpoint), coordinating entities, calling domain services, and using repositories (interfaces).
-
-* **`interfaces.py`:** Defines the **abstract interfaces** or contracts that the application layer expects to perform certain infrastructure tasks. Typically the main interfaces here are the domain **Repositories**.
-
-  For example, if the `example` domain needs to read and write objects from a database, here we define an abstract repository interface (e.g., `class ExampleRepositoryInterface(ABC): ...`) with methods like `list_objects()`, `get_by_id(id)`, `save(obj)`, etc. These interfaces can be abstract classes using `abc.ABC` and `@abstractmethod` or Python 3.8+ **protocols** (`typing.Protocol`) describing the expected methods. The domain/application then depends on this interface, without knowing which concrete implementation will be used.
-
-  Besides repositories, we can define interfaces for other external services the application uses, e.g., an email service interface, an AI provider interface (if you want to abstract calls to external models), etc. Anything the application logic needs to call but which is an infrastructure detail can be formalized as an interface here.
-
-  By isolating interfaces here we apply the **Dependency Inversion** principle: the application layer defines the contract, and the concrete implementation comes from infrastructure (inverting the dependency). This lets us easily swap implementations (e.g., use an in-memory repository for tests and a real SQL repository in production, both fulfilling the same interface).
-
-* **`use_cases.py`:** Contains the implementation of the module’s **Use Cases**. Each use case represents a specific action or functionality the system provides, aggregating the logic needed to accomplish it.
-
-  Use cases can be implemented in different ways:
-
-  * As simple **functions** when the logic is small.
-  * As **classes** (e.g., one class per use case with an `execute()` method, or making the class callable via `__call__`). The class approach is handy if the use case needs to inject a repository via the constructor and then execute.
-
-  For example, suppose the example module manages “foo.” We might have a `CreateFoo` and a `ListFoo` use case. In code we could have:
-
-  ```python
-  from app.modules.example.domain.entities import Foo
-  from app.modules.example.application.interfaces import FooRepositoryInterface
-
-  class FooUseCase:
-      def __init__(self, repo: FooRepositoryInterface):
-          self.repo = repo
-      
-      def create_foo(self, data: dict) -> Foo:
-          # Validate and create entity
-          foo = Foo(**data)
-          # Business rules (call domain services if needed)
-          # ...
-          # Persist using the repository
-          saved_foo = self.repo.save(foo)
-          return saved_foo
-
-      def list_foos(self) -> list[Foo]:
-          # Get all Foos from the repository
-          return self.repo.list()
-  ```
-
-  In this example the `FooUseCase` receives a repository implementation via injection (in the constructor) and uses it to store the created entity. It coordinates entity creation and rule application. The same style applies to read use cases: obtain data from the repo, possibly apply some rule (e.g., filter, sort, calculate something), and return the result.
-
-  The important point is that **Use Cases know nothing about HTTP, JSON, or API details**—that’s handled in the presentation layer. They receive and return domain objects (or plain Python structures) and can raise business exceptions if something prevents execution (e.g., “Foo already exists,” “Invalid data,” etc.), which the presentation layer will transform into appropriate HTTP responses.
-
-  We can implement multiple use cases in `use_cases.py`. If the file gets too large, a good practice is to split by functionality (e.g., one file per complex use case, or grouping related ones). But the template initially leaves a single file for simplicity.
-
-* **`utils.py`:** Contains utility functions specific to the application layer. Here we can place helper functions used by multiple use cases, such as common validations, data formatting, etc. The goal is to avoid duplication and centralize simple logic reusable across different use cases.
-
-  For example, if several use cases need to validate input formats (like checking whether an email is valid), we can have a function `validate_email(email: str) -> bool` here. The use cases can then call this function instead of duplicating the logic.
-
-###### Infrastructure
-
-The module’s `infrastructure` sub-folder contains the concrete implementations of the technology details required by the module, fulfilling the interfaces defined in the application layer. Here we deal with persistence, external calls, and anything involving external resources or framework details.
-
-* **`models.py`:** Defines the **infrastructure data models**, typically database models or ORM mappings. For example, if we use **SQLAlchemy**, this file can declare SQLAlchemy model classes corresponding to the domain entities, with their tables, columns, and relationships. Sometimes the domain entities may coincide structurally with the DB models, but that isn’t required—we may have differences (e.g., technical fields in the DB model that don’t exist in the entity, or vice versa).
-
-  Example (using SQLAlchemy ORM):
-
-  ```python
-  from sqlalchemy import Column, Integer, String
-  from app.core.database import Base
-
-  class FooModel(Base):
-      __tablename__ = "foo"
-      id = Column(Integer, primary_key=True, index=True)
-      name = Column(String, index=True)
-      description = Column(String)
-      # etc...
-  ```
-
-  Where `Base` would be the declarative base class imported from `core/database.py`. Repositories use these models to perform CRUD operations. If you use another kind of persistence (e.g., an ODM for Mongo, or direct access via client libraries) you might not have a formal “models.py,” but you will still have infrastructure-specific data representations here (e.g., Mongo schemas or JSON document mappings).
-
-  In AI scenarios, `models.py` could contain classes to interact with a pre-trained ML model or endpoint, but usually that would be more of a service than a data model. In that case you could create infrastructure classes to encapsulate calls to external AI models (e.g., the OpenAI API)—those classes could reside here or in `repositories.py` depending on how you categorize them (are they knowledge repositories or external services? You can treat them similarly).
-
-* **`repositories.py`:** Contains the **concrete repository implementations** defined in `application/interfaces.py`. Here we write classes (or functions) that access the real data source to retrieve or save information.
-
-  Continuing the Foo example, if `interfaces.py` defines `FooRepositoryInterface` with certain methods, `repositories.py` will have a `FooRepository` class (implementing `FooRepositoryInterface`) that performs the actual operations using the database or other means.
-
-  Example:
-
-  ```python
-  from app.modules.example.application.interfaces import FooRepositoryInterface
-  from app.modules.example.infrastructure.models import FooModel
-  from app.core.database import SessionLocal
-
-  class FooRepository(FooRepositoryInterface):
-      def __init__(self, db_session=None):
-          self.db = db_session or SessionLocal()
-
-      def list(self) -> list[Foo]:
-          results = self.db.query(FooModel).all()
-          # Map FooModel (ORM) to Foo entity (domain.entities)
-          return [Foo.from_model(m) for m in results]
-
-      def get_by_id(self, id: int) -> Foo | None:
-          model = self.db.query(FooModel).get(id)
-          return Foo.from_model(model) if model else None
-
-      def save(self, foo: Foo) -> Foo:
-          model = FooModel.from_entity(foo)
-          self.db.add(model)
-          self.db.commit()
-          self.db.refresh(model)
-          return Foo.from_model(model)
-  ```
-
-  *(Note: methods `from_model` and `from_entity` would be helper methods to convert between domain entities and ORM models, which you might implement to keep the domain separate from the ORM layer.)*
-
-  In this example, the repository receives a database session (which we can obtain via `app.core.database.SessionLocal`). In FastAPI we’ll use dependency injection to provide one session per request (see `dependencies.py` in the presentation layer). The repository performs the query or persists data and returns domain objects.
-
-  If the application uses a different database or an external API, this repository could call the appropriate endpoints, parse the response, and transform it into domain entities. For instance, if `example` were a module that fetches data from an external service, the repository might use `httpx` (included via `fastapi[standard]`) to make requests and then build entities.
-
-  **Important:** The repository is part of infrastructure, so it can and should know both infrastructure models (`FooModel`, or external API details) and domain entities (`Foo`). It acts as an adapter converting between the two worlds. The logic here should be limited to data operations (queries, conversions), not business rules (those belong in domain/application).
-
-###### Presentation
-
-The `presentation` sub-folder defines how the module exposes its functionalities to the outside world—here via a web API (FastAPI). It houses the **routers** (controllers) with HTTP endpoints, the **Pydantic schemas** for validation/serialization, and the module-specific **dependencies** (e.g., repository providers or authentication providers for use in the endpoints).
-
-* **`routers.py`:** Defines the API routes (endpoints) for this module. Typically we create a `router = APIRouter()` object and decorate Python functions with HTTP verbs (@router.get, @router.post, etc.) for each needed endpoint.
-
-  Each endpoint function should handle:
-
-  * Receiving validated inputs (path params, query params, body) using the schemas (see below).
-  * Obtaining required instances via dependencies (e.g., a repository or the current authenticated user).
-  * Calling the appropriate use case in the application layer, passing the necessary data.
-  * Handling business exceptions raised by the use cases (e.g., converting a “not found” exception into an HTTP 404, or a validation error into 400).
-  * Returning the result (converting to an output schema if it’s a complex object, or simply returning basic types that FastAPI will convert automatically).
-
-  For example, suppose a GET endpoint to list Foos:
-
-  ```python
-  from fastapi import APIRouter, Depends, HTTPException
-  from app.modules.example.presentation.schemas import FooOut
-  from app.modules.example.application.use_cases import ListFoosUseCase
-  from app.modules.example.presentation.dependencies import get_foo_repository
-
-  router = APIRouter(prefix="/foo", tags=["Foo"])
-
-  @router.get("/", response_model=list[FooOut])
-  def list_foos(repo = Depends(get_foo_repository)):
-      use_case = ListFoosUseCase(repo)
-      foos = use_case.execute()
-      return foos  # FastAPI will convert each Foo via FooOut schema
-  ```
-
-  In this pseudo-code:
-
-  * We use `Depends(get_foo_repository)` to inject a concrete repository instance (defined in `infrastructure`) that satisfies the expected interface.
-  * We instantiate the `ListFoosUseCase`, providing the repository.
-  * We execute and obtain the result (a list of `Foo` entities).
-  * We return that list; FastAPI uses the `response_model` `list[FooOut]` to filter and serialize the response as defined in the schema.
-  * Error handling: if `execute()` raised an exception we could catch it and raise the corresponding `HTTPException`.
-
-  The `routers.py` file can contain multiple routes (GET, POST, PUT, DELETE) according to the module’s operations. If the routes become numerous, we can split into multiple files (e.g., `routers_public.py`, `routers_admin.py`) and include them all in a main APIRouter, but the template keeps a single file for simplicity.
-
-  Finally, in `app.py`, the example module’s router would be included in the main app:
-
-  ```python
-  from app.modules.example.presentation.routers import router as example_router
-  app.include_router(example_router)
-  ```
-
-  possibly with a prefix (e.g., a global `/api/v1`, or specific prefixes if desired).
-
-* **`docs.py`:** This file is optional and can be used to separate documentation specific to the module, such as endpoint descriptions, usage examples, or additional route details for better code organization when the docs are extensive. However, in many cases endpoint documentation can be done directly in the routes using docstrings and FastAPI annotations, so this file can remain empty or be omitted.
-
-* **`exceptions.py`:** Defines exceptions specific to the module that may be raised by endpoints or use cases. These exceptions can signal domain-specific errors (e.g., “Foo already exists,” “Foo not found”) and can be caught by the global exception handler (`core/exception_handler.py`) to return appropriate HTTP responses.
-
-  For example, we might have:
-
-  ```python
-  class FooAlreadyExistsException(Exception):
-      """Exception raised when a Foo already exists."""
-      pass
-  ```
-
-  Then, within use cases or routes, we can raise this exception when needed, and the global handler will turn it into an HTTP 409 Conflict response.
-
-* **`schemas.py`:** Defines the **Pydantic Schemas** used to validate and serialize input and output data for this module’s API endpoints. Pydantic (v2, integrated via FastAPI) allows creation of model classes representing the expected/returned JSON structure, with automatic type validation.
-
-  Typically we’ll have:
-
-  * **Input Schemas**: Represent POST/PUT request bodies or complex parameters. Example: `FooCreate` with required fields to create a Foo.
-  * **Output Schemas**: Represent how the entity is exposed through the API. Example: `FooOut` with fields to return to the client (usually matching entity fields, minus secrets or irrelevant ones).
-
-  In FastAPI, we use these schemas in route functions: function parameters for body (e.g., `foo: FooCreate` gets automatically populated and validated) and `response_model=FooOut` for response conversion.
-
-  In the example module, we might have in `schemas.py`:
-
-  ```python
-  from pydantic import BaseModel
-
-  class FooBase(BaseModel):
-      nome: str
-      descricao: str
-
-  class FooCreate(FooBase):
-      pass  # Same fields for now, but separated in case of future differences
-
-  class FooOut(FooBase):
-      id: int
-
-      class Config:
-          from_attributes = True  # Allows creating FooOut from ORM/dataclass with matching attributes
-  ```
-
-  Here we define a base schema with shared fields, a creation schema (same as base for now), and an output schema that includes the id. `from_attributes = True` is a Pydantic v2 setting that allows automatic conversion from objects with matching attributes (useful when returning domain entities or ORM models; FastAPI/Pydantic can extract the data).
-
-  Schemas serve as the API contract—they document and validate the expected format. Keep them updated as the domain evolves, but don’t include fields that shouldn’t be exposed (e.g., passwords, secrets, etc.).
-
-* **`dependencies.py`:** Defines FastAPI **dependency functions** specific to the module. These functions use FastAPI’s **Dependency Injection** system (`fastapi.Depends`) to provide ready-to-use objects for endpoints, keeping route code cleaner and decoupled from object creation.
-
-  Common dependencies defined here include:
-
-  * **Repository or service instantiation**: e.g., `def get_foo_repository():` that instantiates and returns a `FooRepository` (from infrastructure). It may also manage DB sessions (e.g., binding a repo to a SQLAlchemy session from `core/database.get_db()`).
-  * **Authentication/authorization**: e.g., `def get_current_user()` that checks the JWT token in the Authorization header (using `core/security.py` functions) and returns the current user or raises a 401 exception. Though this might be globally reused, if it’s module-specific, it can reside here.
-  * Any other logic for preparing arguments for endpoints: e.g., verifying if an entity exists before reaching the endpoint (loading from repo and injecting, or raising 404 if not).
-
-  In our example, a simple `get_example_repository`:
-
-  ```python
-  from app.modules.example.infrastructure.repositories import FooRepository
-  from app.core.database import get_db
-
-  def get_foo_repository(db=Depends(get_db)):
-      return FooRepository(db_session=db)
-  ```
-
-  FastAPI will first resolve `get_db` (likely providing a per-request DB session), then pass that session to `FooRepository` and return the instance. The route function then receives a ready-to-use `FooRepository`, unaware of its creation details.
-
-  Using `dependencies.py` promotes reuse and centralization: if we want to change how we obtain the repository (e.g., switch to a fake implementation for testing, or add caching), we do it in one place. It also simplifies route testing, as we can override dependencies in FastAPI’s TestClient if needed.
-
-To summarize the structure of a **module**: the **Presentation** layer (routers) receives the request and uses **Dependencies** to get **Repositories** (Infra), then creates a **Use Case** (Application) to execute logic using **Entities/Services** (Domain), possibly persisting/querying via the repository, and returning the result which the router sends back to the client. Each part does its job and stays relatively isolated.
-
-### `docs/` Directory (Documents)
-
-The `docs/` folder is intended to store **external documentation** for the project. This is where you can place files like PDFs, specification documents, requirements, diagrams, design notes, or any other documentation artifacts that are useful to keep alongside the code repository, but that are not part of the application code itself.
-
-For example:
-
-* Client requirement documents in PDF/DOCX.
-* Architecture or data model diagrams (editable formats or images).
-* Research documentation or papers related to the project domain (e.g., AI papers, external API manuals).
-* Any supplementary documentation to help onboard developers.
-
-Keeping these files in `docs/` ensures the team has easy and version-controlled access to this material. Remember not to store sensitive information here unless encrypted, since it will be part of the repository (unless the repository is private and access is controlled).
-
-### `scripts/` Directory (Useful Scripts)
-
-The `scripts/` folder contains **helper scripts** used for project development or maintenance, but that **are not part of the running application code**. In other words, they are utilities run separately, usually for administrative tasks, support functions, or project setup.
-
-In this template, for example:
-
-* **`scripts/directory_tree.py`:** A Python script that likely generates the directory tree representation automatically (similar to the structure shown above). This type of script can be used to update the README documentation by listing new folders/files consistently.
-* (Other scripts can be added as needed. Examples: a script to seed the database with test data, run lint/format across all modules, convert data files, etc.)
-
-When creating scripts here, keep things organized and documented. It’s common to add a short header explaining the script’s purpose and how to use it.
-
-**Important:** Scripts inside `scripts/` are not automatically executed by the main system (they are not imported in `app.py` or called by the app). They must be run manually (e.g., `uv run scripts/directory_tree.py` using uv, or activate the env and `python scripts/directory_tree.py`). Because of this, they may have extra dependencies or use code in isolation. Still, try to reuse project functions where it makes sense (e.g., a DB seed script could import an application repository to create records).
-
-### `test/` Directory (Tests)
-
-The `test/` folder contains the project’s **automated tests**. Here we adopt the convention of **mirroring the application's folder structure** inside `test/` to make it easier to locate tests corresponding to each part of the code.
-
-Initial structure:
-
-* **`test/core/`** – Folder for tests related to core (config, database, etc.). For example, testing if configuration variables are correctly loaded, or if logging is working.
-* **`test/modules/`** – Folder for tests related to business modules. Inside it, we replicate each module.
-
-  * `test/modules/example/` – Folder for tests of the example module. Inside it, we can create subfolders or files corresponding to the module’s layers:
-
-    * We might have `test_domain.py`, `test_use_cases.py`, `test_repositories.py`, `test_routers.py`, etc., or even substructures like `domain/test_entities.py`, depending on preference.
-    * In the template, only the `__init__.py` files are present to form the initial structure. It’s up to the developers to add test files as they implement features.
-
-For example, if we implement a `CreateFooUseCase`, we’d create a unit test in `test/modules/example/test_use_cases.py` to verify expected behaviors (e.g., by passing a fake/in-memory repository to the use case). If we implement an endpoint in `routers.py`, we could write an integration test using FastAPI’s `TestClient` in `test/modules/example/test_routers.py` to call the API and check the responses.
-
-**Best practices for tests:**
-
-* Name test files according to what they test. Example: `test_entities.py` for entities, `test_services.py` for domain services, etc. Or organize by functionality: `test_crud_foo.py`, etc.
-* Use testing frameworks like **pytest** (the de facto standard for FastAPI projects). Pytest is not explicitly listed in `pyproject.toml`, but can easily be added (e.g., via `uv add --group dev pytest`).
-* Each test file or function should import the class/function to be tested from the appropriate layer. Keep dependencies isolated: when testing the Domain or Application layer, you can simulate infrastructure (use stubs/mocks for repositories).
-* Infrastructure tests (e.g., real repository tests) may require a test database. Use pytest fixtures to set up and clean up (e.g., an in-memory SQLite DB, or transactions).
-* Presentation/API tests can run with FastAPI’s **TestClient**, perhaps using `dependency_overrides` to inject “fake” repositories or a test connection.
-
-The suggested structure makes it easy to quickly locate tests for a given feature. For example, if a developer modifies `app/modules/example/use_cases.py`, they’ll know that relevant tests are likely in `test/modules/example/test_use_cases.py`.
-
-Remember to run tests regularly (e.g., via `uv run -- pytest`) to ensure everything keeps working as development progresses.
-
-## Implementation Guide and Best Practices
-
-This section consolidates guidelines for implementing new features following the architecture, and best practices the project should observe. The goal is to provide the team with a clear guide to the style and patterns to follow as the project evolves.
-
-### Separation of Responsibilities and Layers
-
-* **Don’t mix layers:** Each function/class should clearly belong to a single layer. Business rules go in domain or application, data access logic only in infrastructure, request/response handling only in presentation. Avoid, for instance, making DB calls directly in `routers.py` (Presentation) or using Pydantic models from `schemas.py` inside `domain` or `application`.
-* **Pure domain:** Keep the code in `domain/` free of external dependencies. This includes not importing SQLAlchemy, FastAPI, requests/httpx, etc. If you need something external (e.g., a complex statistical calculation), it's okay to use calculation libraries—but not infrastructure-specific code.
-* **Orchestrate in Application:** The Application layer (`use_cases`) is the coordinator. It calls whatever it needs from other layers. For example, to fulfill a request: the router calls the use case, which might call a domain service for complex rules, query a repository for data, apply logic, and ask the repository to save something. The application knows the domain (entities, services) and the repository interfaces. But it **does not know or decide** *how* the repository does its job. This lets us swap implementations without changing high-level logic.
-* **Infrastructure can grow in detail without affecting business logic:** If we decide to switch databases (e.g., PostgreSQL to MongoDB) or AI providers, the changes should stay confined to `infrastructure/`, ideally without touching `domain/` or `application/`, except for small adjustments if the contract changes. This reinforces dependency inversion.
-* **Keep presentation thin and simple:** Code in `routers.py` should be minimal, quickly delegating to use cases. It should handle HTTP aspects (status codes, auth via dependencies, route details), but not contain business logic. If you find yourself writing business rules inside a route function body, that code probably belongs in a use case or domain service.
-
-In short, always ask yourself: “Which layer does this logic belong to?”
-If it's response formatting or request parsing → Presentation;
-If it's validation/business rule → Domain/Application;
-If it's data access or external calls → Infrastructure.
-
-### File and Code Naming Conventions
-
-Maintaining consistent naming makes collaboration easier. Here are some conventions adopted in the template:
-
-* **Folder and file names:** Use *lowercase letters*, with underscores (`_`) to separate words if necessary. Examples: `value_objects.py`, `my_module/`. Avoid spaces or special characters. The module name (folder inside `modules/`) should reflect the business context in singular form, preferably short and direct (e.g., `user`, `order`, `payment`). In the example, we use `example` as a generic name.
-* **`__init__.py` files:** usually empty, only to declare the package. Sometimes used to facilitate imports (e.g., import and expose via `__all__`), but use this sparingly to avoid confusion.
-* **Classes and Interfaces:** use **PascalCase** (CamelCase starting with an uppercase letter). Examples: `User`, `OrderRepository`, `ConsultarSaldoUseCase`. For abstract interfaces, you can prefix with I (e.g., `IUserRepository`), suffix with Interface, or use a simple descriptive name. The key is to make it clear from the context or docstring that it's abstract.
-* **Functions and methods:** use **snake\_case** (lowercase\_with\_underscore). Names should be verbs or describe an action/result. Examples: `calcular_total()`, `execute()` (in use case), `obter_por_id()`.
-* **Variables and attributes:** also in snake\_case. Avoid obscure abbreviations; be descriptive (e.g., `quantidade_itens` instead of `qtd` if possible).
-* **Pydantic Schemas:** These are also classes, so PascalCase. Typically named with a suffix indicating their purpose: `XxxCreate`, `XxxUpdate`, `XxxOut`, etc.
-* **Use Cases:** if implemented as classes, it's common to use the `UseCase` suffix for clarity (e.g., `FooUseCase`). Alternatively, some prefer naming use case classes with verbs and no suffix (e.g., `CriarFoo`), but here we adopt the suffix to avoid confusion with entities or services.
-* **Test files:** name them starting with `test_`, and in parallel with the code they test. Example: `test_entities.py` for `entities.py`, or `test_routers.py` for `routers.py`. Within tests, use expressive function names (e.g., `def test_deve_calcular_total_corretamente():`).
-* **Constants:** uppercase letters with underscores. Examples: `PI = 3.14`, or `MAX_TENTATIVAS = 5`.
-* **Internal module names:** Subfolders follow the names `application, domain, infrastructure, presentation` as per the template convention. Keep these names if expanding the project to ensure consistency across modules.
-* **Abstraction vs implementation prefixes:** If you create multiple implementations of an interface, such as different repositories (one SQL, one NoSQL), this can be reflected in the name: `UserRepositorySQL`, `UserRepositoryMongo`, both implementing `UserRepositoryInterface`. However, if there's only one implementation, a simple name like `UserRepository` is sufficient.
-
-By following these conventions, the project code remains **readable**, and collaborators can quickly understand a file/class’s purpose from its name.
-
-### Dependency Inversion and Dependency Injection
-
-Dependency inversion is a fundamental principle in this architecture:
-
-* **Abstractions in the core, implementations on the periphery:** Define interfaces for external functionality (persistence, email sending, etc.) in the Application or Domain layer, and implement them in the Infrastructure layer. This way, the core depends only on abstractions, not concrete details.
-* **FastAPI Depends for injection:** Use FastAPI's dependency system to inject concrete implementations into routes. Instead of instantiating a repository inside the endpoint, use `Depends(get_repo)` so FastAPI handles it. This decouples the endpoint from the repo acquisition method (which might change or be replaced in tests).
-* **Constructors receive dependencies:** In use case or service classes, inject dependencies via constructor (or setter/factory method). Avoid resolving global dependencies within logic (e.g., don’t directly call `FooRepository()` inside a use case; pass the repo as a parameter). This makes it easier to test in isolation (you pass a dummy repo).
-* **Never the opposite:** The Infrastructure layer can import from Domain (e.g., an entity to build an object), but the Domain layer **must never** import anything from Infrastructure. If you see an import from infrastructure in `domain/` or `application/`, something is wrong. Check whether the dependency needs to be inverted via an interface.
-* **Practical example:** In the example module, `application/interfaces.py` defines `FooRepositoryInterface`. `infrastructure/repositories.py` implements `FooRepository` which inherits from this interface. The use case in `application/use_cases.py` accepts a `FooRepositoryInterface`. In the route, we use `repo = Depends(get_foo_repository)` and pass it to the use case. Thus, the use case doesn’t know the exact repo class being used, just the interface. We could easily pass a test repository instead.
-* **Root composition in app.py:** The main file `app.py` can be considered the final composition point of the application – where everything is assembled. For example, if we needed to create global instances or configure global injections, this would be the place. But generally, we keep things simple: each request assembles its own dependencies.
-
-Respecting dependency inversion makes the system more resilient to changes and easier to reuse. For example, we could extract the domain + application layer into a separate library and swap the interface (e.g., from FastAPI to CLI), and the core logic would still work – this is a good mental test to see if dependencies are properly directed.
-
-### Code Standards and Quality
-
-* **Follows PEP8:** All Python code should adhere to PEP 8 (official style guide). This includes 4-space indentation, lines up to \~79 characters (ideally 100 max), snake\_case for functions/variables, etc. Use automated tools whenever possible.
-* **Ruff (Linter):** This project includes [Ruff](https://github.com/astral-sh/ruff) as a development dependency (see `pyproject.toml`). Ruff is an extremely fast linter that helps detect style issues and possible bugs. Basic setup is configured. It's recommended to integrate Ruff into your editor or run it before commits (`uv run -- ruff .` or via pre-commit).
-* **Type hints:** FastAPI heavily relies on type hints for validation and docs. Use **type annotations** throughout the code, not just in endpoints. This improves readability and helps tools like mypy (if static analysis is used). For example, declare return types and parameter types for functions and methods. E.g., `def salvar(self, foo: Foo) -> Foo:`.
-* **Docstrings and comments:** Document public classes and functions with clear docstrings explaining the purpose, parameters, and return. For complex logic, use internal comments to explain specific parts. Remember, another developer (or your future self) will read and appreciate these clarifications.
-* **Small functions, little repetition:** Follow the *DRY* (Don't Repeat Yourself) principle. If you notice duplicated code, consider refactoring into a utility function or service. Keep functions/methods short and cohesive – if a method is doing “too much,” it might need to be split.
-* **Error handling:** Have a clear exception strategy. For example, create custom exceptions in the domain (e.g., `UsuarioNaoEncontradoError` in `domain/exceptions.py` if needed), and catch them in the presentation layer to return appropriate HTTP codes. Avoid unhandled exceptions reaching the presentation, as this results in generic 500 errors. It's better to catch and convert them into an HTTPException or return a friendly result.
-* **Useful logs:** Use the configured logger (`logging.getLogger(__name__)`) at key points: logs for operation start/end, warnings for abnormal situations, errors for caught exceptions. Keep logs informative but not verbose. This helps in debugging and monitoring in production.
-* **Configuration loading:** Use `core/config.py` and `.env` instead of spreading constants throughout the code. This way, changing a parameter (e.g., timeout for an external call) only requires changing the `.env` and possibly restarting the service, without touching code. It also facilitates different setups for dev/staging/prod.
-* **Refactor frequently:** As features are added, keep the structure organized. If a module grows too large, consider subdividing it. For example, a `user` module might have sub-items like `user/domain/entities.py` etc., and if there are many entities, even a folder `entities/` with multiple files. The key is that the architecture serves the project; it can evolve. But any structural changes should be documented and communicated so everyone follows the same standard.
-
-### Test Structuring
-
-* **Unit vs integration testing:** Have unit tests for isolated functions (e.g., entity methods, internal domain service functions, use case logic without DB) and integration tests to ensure pieces work together (e.g., repository test accessing a real test DB, or full route test making a request).
-* **Fixtures to set up scenarios:** Use **pytest** features like fixtures to create necessary objects. For example, a fixture that returns a fake repository populated with some data, to test a use case. Or a fixture that starts an in-memory database and creates tables to test repositories.
-* **Tests in CI/CD:** If this template is used in real projects, test execution will be integrated into CI pipelines. Therefore, ensure tests don’t depend on local state (e.g., use test database defined via environment variable and clean between tests).
-* **Test coverage:** Aim to cover critical functionalities. In particular, use cases (Application) and domain services deserve extensive testing as they carry business logic. Repositories can have tests to ensure queries are correct. Endpoints can have at least one happy-path test and some error tests.
-* **Deterministic tests:** Tests should pass or fail consistently. If using randomness (e.g., in some AI component?), fix seeds or use mocks to control results, so the test is repeatable.
-* **Running tests:** As mentioned, we can run via `pytest`. If using uv, a handy command: `uv run -- pytest -q` (`-q` is optional for quieter output). This ensures the right venv and dependencies are activated. Remember to configure `.env` if your config code needs it, or use `.env.test` during tests if we configure multi-environments.
-
-By maintaining good test discipline, we gain confidence to evolve the project without fear of breaking existing functionality, since tests will alert us early to regressions.
-
-## Project Dependencies
-
-This template already includes some Python dependencies pre-installed and pre-configured as defined in `pyproject.toml` and `uv.lock`. Here's a summary of the main ones:
-
-* **FastAPI (v0.115.13)** – Modern high-performance ASGI web framework, ideal for building RESTful APIs and easily integrating AI components. We use `fastapi[standard]`, which includes useful extras:
-
-  * **Starlette (v0.46.2):** underlying ASGI framework for FastAPI, handles routing, middleware, WebSocket, etc.
-  * **Uvicorn (v0.34.3):** high-performance ASGI server included via the "standard" extra, used to run the app.
-  * **Email-validator, python-multipart, itsdangerous, PyYAML, httptools, websockets, etc.:** various libs included via `[standard]` to support forms, uploads, WebSockets, and other FastAPI features.
-  * **FastAPI-CLI (v0.0.7):** command-line tool for managing FastAPI apps (included), e.g., run `python -m fastapi serve` to launch the API. (Optional; running uvicorn directly also works.)
-  * **HTTPX (v0.28.1):** powerful async HTTP client, useful for calling external APIs (e.g., an AI service). Included as a dependency of fastapi\[standard].
-  * **Jinja2 (v3.1.6):** templating engine included via Starlette (can be useful for generating HTML emails, for example).
-* **Pydantic (v2.11.7):** Library for data validation and model creation, base for FastAPI schemas. Version 2 brings optimized performance via pydantic-core. We also use **pydantic-settings (v2.10.0)** for config handling (loading from .env).
-* **UV (Astral)** – Package and environment manager. Creates the `.venv`, resolves dependencies (`uv.lock`), and executes commands in isolation. A modern alternative to pip/pipenv/poetry, offering speed and ease. (See next section for usage details.)
-* **Ruff (v0.12.0)** – Linter for code quality. Included in the development dependencies group (`[tool.ruff]` in pyproject if configured). It checks PEP8, common errors, and even does some auto-fixes. Use it regularly to keep the code clean.
-* *(Other possible dependencies not listed here can be added as needed, e.g., AI libraries like TensorFlow/PyTorch, ORMs like SQLAlchemy, or other utilities.)*
-
-The **pre-installed dependency structure** can be visualized hierarchically as generated by `uv lock`, but the key point is that the main tools (FastAPI, Pydantic, etc.) are already available. To add new libraries, use `uv add library_name`, which will update both `pyproject` and `uv.lock`.
-
-## Environment Setup and Running the App
-
-Below are instructions to set up the development environment and run the template app. We cover from installing dependencies with uv to running via Docker.
-
-### UV Package Manager
-
-This project uses **uv** (by Astral) as the package and environment manager. UV is a modern tool combining the functions of pip, virtualenv, pip-tools, etc., making project management much easier. Key features of uv:
-
-* Automatically creates an isolated virtual environment (`.venv`) for the project using the Python version specified in `.python-version`.
-* Manages dependencies via `pyproject.toml` (general specs) and `uv.lock` (for locked versions), ensuring reproducibility.
-* Simple commands to add/remove packages (`uv add`, `uv remove`), sync environments (`uv sync`), run scripts/commands in the venv (`uv run`), etc.
-* Incredibly fast installation compared to traditional pip.
-
-**Read the official uv documentation for more on [installation](https://docs.astral.sh/uv/getting-started/installation/).**
-
-Once uv is available, ensure you're in the project directory (`fastapi-clean-architecture-ddd-template/`) when running uv commands, as it relies on the local `pyproject.toml`.
-
-### Setting Up Environment Variables (.env)
-
-Before running the app, configure your environment variables:
-
-1. Copy the `.env.example` file and name it `.env` in the project root:
+6. **Set environment variables:**
 
    ```bash
    cp .env.example .env
    ```
 
-2. Open the `.env` file in an editor. By default, it may list example variables (likely empty or with placeholder values). Fill in each variable as appropriate:
+   Edit `.env` with appropriate values. Set `SECURITY_API_KEY` to a secret token required to access protected endpoints. Keep `SECURITY_API_KEY_HEADER` as `X-API-Key` (or change if needed).
 
-   * Example: `APP_NAME="FastAPI Clean Architecture DDD Template"`, `DEBUG=true` or `false`, `DATABASE_URL="postgresql://user:password@localhost:5432/db"` etc.
-   * If the app integrates with an external AI service, insert required API keys or endpoints here too (e.g., `OPENAI_API_KEY=...`), so the code in `core/config.py` can retrieve them.
-   * **Do not use quotes** around values in `.env` (unless you want to include spaces). Pydantic Settings can interpret booleans (`true/false`) and numbers, but may treat everything as strings if not specified – conversion is usually handled by BaseSettings using type hints.
+7. **Run the API in development (with hot-reload):**
 
-3. Check if `.env` is listed in `.gitignore` (it should be by default). Never commit this file with real credentials.
+   ```bash
+   uv run uvicorn app.app:app --reload --port 8000 --host 0.0.0.0
+   ```
 
-When running the app via uvicorn/uv, will uv automatically load `.env`? Actually, loading is done by our `Settings(BaseSettings)` code, which knows the env\_file. For safety, uv can also load .env if configured.
+   This starts Uvicorn with the FastAPI app (`app.app:app`, i.e., `app` object in `app/app.py`), enables auto-reload on file changes, and binds to port 8000 on all interfaces.
 
-In summary, don’t skip this step. Without a properly configured `.env` (or exported variables), your app may use defaults or fail to start, depending on how `Settings` was implemented.
+   Alternatively, use **FastAPI CLI** (installed via the `[standard]` extra):
 
-### Dependency Installation
+   ```bash
+   uv run fastapi dev app/app.py --port 8000
+   ```
 
-With uv installed and `.env` configured, proceed to install the project dependencies in the virtual environment.
+   Either way, your API will listen at `http://localhost:8000`.
 
-* **Sync the environment (install packages):**
+8. **Open the interactive docs** to test:
+   Go to [http://localhost:8000/docs](http://localhost:8000/docs). You’ll see Swagger UI to try endpoints. Click **Authorize** and supply the API Key from your `.env` to call protected routes.
+
+> 💡 **Tip:** `uv run ...` ensures the lockfile is synced before execution, avoiding version drift. If you don’t use `uv`, you can run `uvicorn app.app:app --reload --port 8000` after installing dependencies with `pip install -r requirements.txt`.
+
+---
+
+### Path B — **Docker / Docker Compose**
+
+If you prefer, or for production purposes, run the app in a Docker container:
+
+1. **Ensure Docker is installed** and the daemon is running.
+
+2. **Build the Docker image:**
+   From the project root:
+
+   ```bash
+   docker build -t fastapi-apikey-auth .
+   ```
+
+   Uses the provided `Dockerfile` to package the app. The image is named `fastapi-apikey-auth`.
+
+3. **Run the container:**
+
+   ```bash
+   docker run --rm -p 8000:8000 --env-file .env fastapi-apikey-auth
+   ```
+
+   This:
+
+   * Publishes container port 8000 to host 8000.
+   * Loads environment variables from your local `.env` (ensuring the API Key and other configs are available inside the container).
+   * Uses the image you built above.
+   * `--rm` removes the container after exit.
+
+4. **(Optional) Use Docker Compose for development:**
+   A `docker-compose.yaml` is provided. It builds the image and exposes port 8000. Just run:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+   The `api` service maps `8000:8000` and mounts the project directory for live reload. Feel free to tweak `docker-compose.yaml` (e.g., volumes or commands).
+
+5. **Open Swagger and test:**
+   With the container running, go to [http://localhost:8000/docs](http://localhost:8000/docs) to confirm everything works inside the container. Routes and authentication should behave the same as locally.
+
+> 🐳 **Tip:** The image is based on slim Python, containing only project deps (thanks to `requirements.txt`). For a smaller image, consider multi-stage builds or Alpine/Python base. Also, configure secrets via CI/CD or orchestrators instead of hardcoding in the Dockerfile.
+
+---
+
+## 🔌 Available Endpoints
+
+> Generally, all API responses (success and error) follow the **`StandardResponse`** schema. It includes fields like `code`, `method`, `path`, and `timestamp`, plus a `details` object containing actual results or error messages—providing uniform info for logging and client handling.
+
+### 🔐 Authentication
+
+API Key authentication works as follows in this project:
+
+* All “protected” routes require a specific HTTP header, whose default name is defined in `SECURITY_API_KEY_HEADER` (in `.env`). By default, we use **`X-API-Key`**.
+* The header value must match the key set in the `SECURITY_API_KEY` environment variable.
+* If the key is missing or incorrect:
+
+  * The API returns **HTTP 401 Unauthorized**, with an error JSON indicating invalid credentials.
+  * The `WWW-Authenticate` header is included in the response, as recommended by HTTP for API credentials (though not Basic/Bearer, it indicates authentication is required).
+* Certain endpoints remain open by design: typically Swagger `/docs`, `/openapi.json`, and health check `/healthz`. This allows checking status or documentation without a key.
+
+### 📋 Overview
+
+Main endpoints provided by this project:
+
+| Method   | Route                  | Description                                                                 | Auth | Body (JSON)             | Success | Main Errors   |
+|----------|------------------------|-----------------------------------------------------------------------------|:----:|-------------------------|:-------:|---------------|
+| **POST** | **`/api/v1/example/`** | Example endpoint performing a demo operation (e.g., personalized greeting). |  ✅   | Yes (JSON object input) |   200   | 401, 422, 500 |
+| **GET**  | **`/healthz`**         | Application health check (returns “ok” if alive).                           |  ❌   | N/A                     |   200   | 500           |
+| **GET**  | **`/`**                | Redirects to Swagger UI (`/docs`).                                          |  ❌   | N/A                     |   308   | N/A           |
+| **GET**  | **`/docs`**            | Interactive Swagger documentation (OpenAPI UI).                             |  ❌   | N/A                     |   200   | N/A           |
+| **GET**  | **`/redoc`**           | Alternative ReDoc documentation.                                            |  ❌   | N/A                     |   200   | N/A           |
+
+*(Auth = requires API Key; Body = JSON payload required, if applicable.)*
+
+---
+
+### 1) POST `/api/v1/example/` — **Operation Example**
+
+<details>
+<summary><strong>Endpoint Details</strong></summary>
+
+**Description:** This illustrative endpoint accepts a JSON input (e.g., with a name) and returns a simple response (e.g., a personalized greeting). It demonstrates request validation via Pydantic, the need for authentication, and the standardized response format.
+
+* **Requires authentication?** Yes, send the **`X-API-Key`** header (or the one defined in `SECURITY_API_KEY_HEADER`) with the correct key.
+
+* **Request body (JSON):**
+
+  ```json
+  {
+    "name": "João da Silva"
+  }
+  ```
+
+  * `name` (string): Person’s name to greet. Required; minimum length 1 (illustrative validation).
+
+* **Success response (HTTP 200):**
+
+  Assuming the provided name is “João da Silva”:
+
+  ```json
+  {
+    "code": 200,
+    "method": "POST",
+    "path": "/api/v1/example/",
+    "timestamp": "2025-07-27T03:15:00Z",
+    "details": {
+      "message": "Request processed successfully.",
+      "data": {
+        "greeting": "Hello João da Silva!"
+      }
+    }
+  }
+  ```
+
+  *Explanation:* `details.data.greeting` contains the message generated from the supplied name.
+
+* **Possible errors (codes & conditions):**
+
+  * `401 Unauthorized`: Missing or incorrect API Key header.
+  * `422 Unprocessable Entity`: Input JSON doesn’t match the expected schema (e.g., required field missing, wrong type).
+  * `500 Internal Server Error`: Unexpected processing failure (e.g., unhandled exception).
+
+* **Error example (missing/invalid API Key – HTTP 401):**
+
+  ```json
+  {
+    "code": 401,
+    "method": "POST",
+    "path": "/api/v1/example/",
+    "timestamp": "2025-07-27T03:15:00Z",
+    "details": {
+      "message": "Authentication failed.",
+      "data": {
+        "error": "Invalid or missing API key."
+      }
+    }
+  }
+  ```
+
+* **Error example (validation – HTTP 422):**
+
+  ```json
+  {
+    "code": 422,
+    "method": "POST",
+    "path": "/api/v1/example/",
+    "timestamp": "2025-07-27T03:15:00Z",
+    "details": {
+      "message": "Validation error.",
+      "data": {
+        "name": "Field required"
+      }
+    }
+  }
+  ```
+
+  *Note:* The internal structure of validation details may vary with Pydantic/FastAPI settings. The project’s standard response wraps error payloads in `StandardResponse`.
+
+* **Quick test tip:** Use `curl` to test (replace `<YOURKEY>` with the key set in `.env`):
 
   ```bash
-  uv sync
+  curl -X POST "http://localhost:8000/api/v1/example/" \
+    -H "Content-Type: application/json" \
+    -H "X-API-Key: <YOURKEY>" \
+    -d '{"name": "João da Silva"}'
   ```
 
-  This command will make uv read the `pyproject.toml` and `uv.lock`. If the lockfile is present and compatible, it will install the exact versions listed in it into `.venv`. If you've added a new dependency to `pyproject.toml` and haven’t run lock yet, `uv sync` will also create/update the lockfile. Generally, after cloning the project, running `uv sync` ensures that your environment matches everyone else's.
+</details>
 
-  *Note:* The first execution will create the `.venv` directory and download the packages, which may take a few seconds. Subsequent runs will be faster if nothing has changed.
+---
 
-* **Activating the virtualenv (optional):** uv allows you to run commands without manually activating it (`uv run` handles that automatically). But if you want to enter the venv to run Python directly, do:
+### 2) GET `/healthz` — **Health Check**
 
-  * On Linux/macOS:
+<details>
+<summary><strong>Endpoint Details</strong></summary>
 
-    ```bash
-    source .venv/bin/activate
-    ```
-  * On Windows (PowerShell):
+**Description:** Simple monitoring endpoint returning the application’s health status. Useful for automated checks (e.g., Kubernetes, AWS ELB, or other monitoring tools).
 
-    ```powershell
-    .venv\Scripts\Activate.ps1
-    ```
+* **Requires authentication?** No. Public by design, since orchestrators typically lack credentials.
+* **Request body:** N/A (nothing beyond the GET request).
+* **Example response (HTTP 200):**
 
-  Once activated, you'll see the prefix `(.venv)` in the terminal. You can then use `python` or `pytest` directly. Don’t forget to `deactivate` when done. Again, this isn't strictly necessary if you always use `uv run`, but it's handy for familiarity.
-
-* **Verifying the installation:** You can check if everything is okay by running:
-
-  ```bash
-  uv run python -V
+  ```json
+  {
+    "code": 200,
+    "method": "GET",
+    "path": "/healthz",
+    "timestamp": "2025-07-27T03:15:00Z",
+    "details": {
+      "message": "Request processed successfully.",
+      "data": {
+        "status": "ok"
+      }
+    }
+  }
   ```
 
-  This should show the Python version (as per `.python-version`) and confirm that the command ran inside the venv. Or:
+  Here, `details.data.status` indicates the service is operational. You can add other fields (e.g., app version, build timestamp) if desired.
+* **Possible errors:**
 
-  ```bash
-  uv run python -c "import fastapi; print(fastapi.__version__)"
+  * `500 Internal Server Error`: Rare; if something prevents even the status from being returned. If the app can respond at all, it’s unlikely to return 500 here.
+
+</details>
+
+---
+
+### 3) GET `/` — **Redirect to `/docs`**
+
+<details>
+<summary><strong>Endpoint Details</strong></summary>
+
+**Description:** Application root (/) endpoint. Instead of returning content, it automatically redirects to Swagger UI (`/docs`).
+
+* **Requires authentication?** No. Anyone hitting the root will be redirected (and the docs page doesn’t require auth to view).
+* **Behavior:** Uses **HTTP 308 Permanent Redirect**, meaning:
+
+  * The original HTTP method is preserved (if someone POSTed to `/`, it would redirect to a POST on `/docs`—though that’s not a practical case).
+  * Clients and caches may store this redirect permanently.
+* **Example response (HTTP 308):**
+
+  ```json
+  {
+    "code": 308,
+    "method": "GET",
+    "path": "/",
+    "timestamp": "2025-07-27T03:15:00Z",
+    "details": {
+      "message": "Redirecting to documentation.",
+      "data": {
+        "url": "/docs"
+      }
+    }
+  }
   ```
 
-  to print the installed FastAPI version, confirming it's accessible.
+  Besides the body, the `Location: /docs` header is sent, as required by HTTP for redirects.
+* After redirect, the client will see the Swagger UI and can interact with the API from there.
 
-### Running the Application
+</details>
 
-With the environment set up, let’s run the FastAPI application locally. There are several ways:
+---
 
-* **Using uvicorn directly:**
-  If the virtualenv is activated, simply run:
+### 4) GET `/docs` & `/redoc` — **Documentation**
 
-  ```bash
-  uvicorn app.app:app --reload
-  ```
+<details>
+<summary><strong>Endpoint Details</strong></summary>
 
-  This starts the Uvicorn server pointing to the `app` object inside the `app.app` module (our FastAPI instance). The `--reload` flag enables automatic reloading when code changes (great for development).
+**Description:** FastAPI automatically provides two documentation interfaces:
 
-  Without venv activated, you can run it via uv:
+* **`/docs`**: **Swagger UI** interface to browse endpoints, inspect request/response schemas, and execute calls directly in the browser (*Try it out*).
+* **`/redoc`**: **ReDoc** interface, a static and clean documentation based solely on the OpenAPI schema (helpful for read-only sharing).
 
-  ```bash
-  uv run -- uvicorn app.app:app --reload
-  ```
+- **Requires authentication?** Not to view docs. However, to test protected endpoints via Swagger UI, click **Authorize** and provide the API Key (the UI will show a field using the configured header name).
+- **Practical use:** Use `/docs` during development for quick experimentation. In production, consider disabling or protecting this route (via FastAPI configs or basic auth at the web server) if you don’t want the docs publicly exposed.
+- **Example view:** Swagger UI looks like this:
+  ![Swagger UI Screenshot](https://fastapi.tiangolo.com/img/index/index-01-swagger-ui-simple.png)
+  *(Note: illustrative image from FastAPI docs; your actual UI will show your endpoints and models).*
 
-  The `uv run --` ensures uvicorn is executed within the isolated environment, even if you're outside the venv. Note that we're running uvicorn in development mode (default port 8000). Visit [http://localhost:8000/docs](http://localhost:8000/docs) to see the Swagger UI documentation generated automatically from the endpoints (currently, only those from the example module).
+</details>
 
-* **Using FastAPI-CLI:**
-  Since we included fastapi-cli, another option is:
+---
 
-  ```bash
-  uv run -- python -m fastapi app.app:app --reload
-  ```
+## ❓ Frequently Asked Questions (FAQ)
 
-  This effectively does the same as uvicorn (the fastapi CLI uses uvicorn under the hood), so there's no significant difference. Use whichever approach you prefer.
+**1. What’s the API Key header name and can I change it?**
+By default, **`X-API-Key`**, set via `SECURITY_API_KEY_HEADER`. You can change it in `.env` or production env. Ensure client apps know the header name you pick.
 
-Once the server is running, you should see Uvicorn logs in the console indicating the app is serving on port 8000. The interactive documentation (Swagger) will be available at `/docs` and the Redoc interface at `/redoc`. Initially, with the example module empty, the API may not have useful endpoints listed; as you add routes, they will appear there.
+**2. How do I generate or obtain the API Key?**
+Implementation choice. In this example, the key is manually set via the `SECURITY_API_KEY` environment variable. Choose a long random secret and configure it as the accepted key. For more complex scenarios, integrate a database or credential management service to validate multiple keys—but that’s beyond this simple template’s scope.
 
-**Example module endpoints:** If you add some routes in `example/routers.py` (e.g., a status GET), they'll show up. The prefix can be configured in the router (e.g., `router = APIRouter(prefix="/foo", tags=["Foo"])` will place all routes under `/foo`). Make sure `app.py` includes the router (e.g., `app.include_router(example_router, prefix="/api/v1")` if you want a global prefix).
+**3. I get 401 Unauthorized even when sending the header. Why?**
+Check that:
+a) You’re using the **exact** configured header name (e.g., `X-API-Key`, case-sensitive).
+b) You set `SECURITY_API_KEY` correctly and use the **same value** in the request.
+c) There are no stray spaces/characters in the sent key.
+If all looks right, check the app logs—your key may be wrong or not being sent in the expected header.
 
-### Using Docker (Optional)
+**4. What happens if I don’t provide the API Key on protected endpoints?**
+The request is **immediately rejected** with 401 (Unauthorized). The FastAPI security dependency prevents the endpoint function from executing. Configure your HTTP clients to always send the required header.
 
-For those who prefer or need to run in a container (or prepare for production), this project provides Docker support:
+**5. Can I protect `/docs` with an API Key too?**
+Yes. It’s left open by default for convenience. To restrict it, disable Swagger UI (`docs_url=None` when initializing FastAPI) or add protection. One simple approach is applying the same `APIKeyHeader` dependency to a custom docs route (requires overriding the auto-generated route).
 
-* **Building the Docker image:** Make sure Docker is installed. In the project directory, run:
+**6. How do I add new endpoints or modules?**
+Create a new directory in `app/modules` following existing modules (domain, application, presentation). At minimum, create `presentation/routers.py` with your FastAPI routes. Then include the router in `app/app.py`. Use the **example** module as a reference for separation of concerns and schemas.
 
-  ```bash
-  docker build -t fastapi-clean-architecture-ddd-template:latest .
-  ```
+**7. How do I run automated tests?**
+After installing dev deps (`uv sync --group dev` or similar), run:
 
-  This uses the provided **Dockerfile**. It likely performs steps such as:
+```bash
+uv run pytest -q
+```
 
-  * Using a base image (e.g., `python:3.13-slim`).
-  * Copying `pyproject.toml` and `uv.lock`, installing dependencies (this takes advantage of Docker cache if dependencies haven't changed).
-  * Copying the rest of the code.
-  * Setting the env variable `PYTHONPATH=/app` (if the code is copied to /app).
-  * Running `uvicorn app.app:app` as the entrypoint (sometimes via `CMD`).
+This searches `test/`. Initially, there may be only basic or no tests since this is a template. As you add features, create corresponding tests to keep things working as expected.
 
-  Once done, you’ll have a local image named `fastapi-clean-architecture-ddd-template:latest`.
+**8. Does this template support user authentication (username/password) or just API Key?**
+Natively, only API Key. The goal is to show a simple way to protect an API consumed by backend systems or partners (to whom you can provide a secret). If you need end-user auth, implement an additional mechanism (e.g., OAuth2 Password Flow with JWT, well-supported by FastAPI)—outside this example’s scope.
 
-* **Running via standalone Docker:** Run a container from the image:
+**9. Next steps if I want to use this in production?**
+Recommendations:
 
-  ```bash
-  docker run -d --env-file .env -p 8000:8000 fastapi-clean-architecture-ddd-template:latest
-  ```
+* Generate a strong API key and distribute it carefully to API consumers.
+* Enforce HTTPS to protect the key in transit (usually at the server/proxy layer; Uvicorn/Hypercorn don’t directly handle certificates).
+* Adjust `.env` for production (e.g., less verbose logs, disable reload).
+* Optionally add key rotation if you need to invalidate/update keys without downtime (e.g., read multiple valid keys from an external source/file instead of a single `.env` value).
+* Add monitoring and centralized logging: Loguru’s JSON logs can go to your aggregator; monitor the health endpoint periodically.
 
-  This runs in the background (`-d`), loads variables from your local `.env` into the container, and maps port 8000 from the container to 8000 locally. Again, check [http://localhost:8000/docs](http://localhost:8000/docs) to verify it's up.
+**10. Is there CORS support in this project?**
+No explicit CORS configuration by default. FastAPI doesn’t auto-enable CORS. If this API will be consumed by browsers (different origin), enable CORS manually:
 
-  *Note:* Use `docker logs <container_id>` to view logs, and `docker stop` to stop it when needed.
+```python
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust to proper domains in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
 
-* **Docker Compose (multi-service development):** The `docker-compose.yaml` file makes it easier to spin up the app along with other services (if needed). For example, if the project needs a PostgreSQL database and maybe Redis, we could define in compose. You can edit it to add:
+Add this in `app/app.py` before starting the app. If your API is internal (server-to-server), CORS may be unnecessary.
 
-  ```yaml
-  services:
-    api:
-      build: .
-      env_file: .env
-      ports:
-        - "8000:8000"
-    db:
-      image: postgres:15
-      environment:
-        POSTGRES_USER: myuser
-        POSTGRES_PASSWORD: mypass
-        POSTGRES_DB: mydb
-      ports:
-        - "5432:5432"
-  ```
+---
 
-  (This is an example; the actual template may differ.)
+## 🤝 How to contribute
 
-  Then run:
+Contributions are welcome! If you have ideas to improve this template (new features, bug fixes, better docs), feel free to open *Issues* or submit *Pull Requests*. Please follow the guidelines below to keep the project consistent:
 
-  ```bash
-  docker-compose up --build
-  ```
+### 🚀 Contribution flow
 
-  This builds the image and starts both `api` and `db`. The app could read environment variables such as `DATABASE_URL=postgresql://myuser:mypass@db:5432/mydb`, pointing to the `db` container.
+1. **Fork** this repository to your GitHub account.
+2. **Clone your fork** locally:
 
-  Compose is very useful for development, as it allows you to mirror the production environment locally. Remember to shut it down with `docker-compose down` when not in use.
+   ```bash
+   git clone https://github.com/youruser/fastapi-apikey-authentication.git
+   ```
 
-* **Hot-reload in Docker dev:** During development, you might want the container to reflect code changes without rebuilding the image every time. For this, you can map volumes in compose (mounting host code into the container) and run uvicorn in reload mode inside the container. Some extra adjustments are needed in the Dockerfile (like installing `uvicorn[standard]` in the container if not already, though it's included via `fastapi[standard]`) and in compose (mount `./app` to `/app/app`). This isn't configured out of the box, but can be set up if desired.
+   and add the original repo as `upstream`:
 
-Using Docker in development is optional – you can absolutely use just uv + local venv. However, to standardize environments or if someone is on Windows and prefers a Linux container for alignment, it's available.
+   ```bash
+   git remote add upstream https://github.com/BrunoTanabe/fastapi-apikey-authentication.git
+   ```
+3. **Create a branch** for your contribution:
 
-In production, using the resulting Docker image simplifies deployment (k8s, ECS, etc.), remembering to configure production environment variables and security/performance settings (e.g., run uvicorn without `--reload`, possibly with more workers, etc.).
+   ```bash
+   git checkout -b feat/your-feature-name
+   ```
 
-## Final Considerations
+   Use a descriptive name that reflects the proposed change (e.g., `feat/multiple-api-keys` or `fix/header-typo`).
+4. **Prepare your dev environment** following *How to run the project locally* (including `uv sync --group dev` to get `pytest` and `ruff`).
+5. **Implement your change** with clear code and comments when necessary.
+6. **Test locally**: run `pytest` to ensure all tests pass (preferably add tests for your new feature or fix).
+7. **Format/Lint before committing:**
 
-This README aimed to cover **all aspects of the architecture** of the **fastapi-clean-architecture-ddd-template** project, including the purpose of each folder/file and best practices for implementation and maintenance. To recap some key points:
+   ```bash
+   uv run ruff format
+   uv run ruff check --fix
+   ```
 
-* The architecture follows **Clean Architecture** principles, separating domain, application, infrastructure, and presentation layers, making the code more modular, testable, and resilient to change.
-* Each feature module inside `app/modules` is internally structured consistently, making it easy to add new modules following the example's model.
-* Central config files (`core`) allow managing cross-cutting concerns (config, DB, logging, security) in a unified way.
-* Dependency management via **uv** ensures reproducibility and ease of updating packages, while quality tools like **Ruff** keep the code standardized.
-* The template already provides integration with Docker, .env for configuration, and test structure – take advantage of this by always writing tests when adding features, and ensuring they all pass before integrating changes.
-* **Best coding practices** (PEP8, documentation, type hints, separation of concerns) are encouraged so that the project remains clean and understandable as it grows.
-* For any questions, return to this document 😉. It should serve as a continuous reference. If something isn’t clear here, that’s a sign we should further improve the documentation.
+   This applies automatic formatting and fixes lint issues when possible.
+8. **Commit and push**:
 
-With this template in hand, the team can start new projects faster and more uniformly, focusing on application-specific logic since the foundations (structure and basic config) are already prepared. Feel free to adjust details as needed for your specific project, but **maintain consistency** – this will make onboarding new devs easier and code sharing across sibling projects smoother.
+   ```bash
+   git add .
+   git commit -m "feat: Your conventional commit message"
+   git push origin feat/your-feature-name
+   ```
 
-Happy coding! 🚀 And remember: a well-defined architecture is a guide, but it should always serve the software’s purpose. Use it with flexibility and good judgment. Any contributions or improvements to the template itself can be discussed with the team so we can continuously evolve our standard base. Good coding!
+   Try to follow the *Conventional Commits* pattern (see below).
+9. **Open a Pull Request (PR)** from your repo/branch to this repo’s `main`. Fill in the PR description explaining what was done, why, and any details needed to review it.
+10. **Follow the code review**: there may be feedback or suggestions. Respond and adjust as requested.
+11. **Merge**: once approved, your PR will be integrated. You may delete your branch locally and on the fork.
+
+### 🧭 Branch & Commit Conventions
+
+* Name branches consistently:
+
+  * **feat/** for new features.
+  * **fix/** for bug fixes.
+  * **docs/** for documentation-only changes.
+  * **refactor/**, **test/**, **chore/**, etc., for other change types.
+  * Examples: `feat/support-multiple-keys`, `fix/api-key-case-sensitive`.
+* Use **Conventional Commits** for commit messages. Examples:
+
+  * `feat: support multiple API Keys per user`
+  * `fix: correct header validation when missing`
+  * `docs: improve explanation for /healthz endpoint`
+  * Include a scope in parentheses if desired (e.g., `feat(example): add new field to endpoint X payload`).
+
+Maintaining this pattern helps generate a **CHANGELOG** and semantic versions more easily later.
+
+### 🧹 Code Quality & Style
+
+This project follows recommended Python best practices:
+
+* **Linting/Formatting**: Use Ruff to keep code standardized. It’s configured to apply Flake8-style checks, isort, and Black-like formatting. Run `ruff check` regularly and before commits to avoid style issues.
+* **Typing**: Add static types where possible. While Python doesn’t enforce types at runtime, they aid maintenance and IDE integration.
+* **Docstrings**: Feel free to add docstrings to explain complex functions/methods. Especially for public methods, describing expected behavior is helpful.
+* **Organization**: Keep functions/methods short and cohesive. If a piece gets too long/complex, consider refactoring into helpers.
+
+### 🔐 Environment Variables & Secrets
+
+* **Don’t commit secrets**: never commit your `.env` with real sensitive keys. `.gitignore` already ignores it. If needed, use `.env.example` as a template.
+* **Secrets in public PRs**: If you fork publicly and want CI to run on your PR, ensure secrets are configured after integration and never exposed. (For this template, there aren’t many secrets beyond the API Key, which you control locally.)
+
+### 🔄 Pull Requests (PRs)
+
+* **Scope**: Keep each PR focused on a single purpose. Avoid “mega PRs”; split into smaller, review-friendly PRs.
+* **Description**: Provide context and the solution. If there’s a related issue, reference it (e.g., “Closes #10”).
+* **CI/CD**: If CI is configured (e.g., GitHub Actions), wait for green checks. Fix any issues before requesting review (lint errors or failing tests).
+* **Discussion**: If unsure about your approach, open an issue first or a **draft PR** for early feedback.
+
+### ✅ Pre-PR Checklist
+
+Make sure you’ve checked all boxes:
+
+* [ ] Tests written/updated to cover the change (when applicable).
+* [ ] All tests passing (`pytest`).
+* [ ] Lint/format applied (code follows project standards).
+* [ ] Documentation updated (README.md, docstrings, examples).
+* [ ] PR description explains why and what changed.
+* [ ] Commits are organized with meaningful messages.
+
+---
+
+## 📜 License
+
+This project is distributed under the **MIT** license. You’re free to use, modify, and distribute this code as long as you keep the original copyright notice. See [LICENSE](LICENSE).
+
+## 👥 Authors
+
+**Bruno Tanabe** – *Creator & Maintainer* – [GitHub](https://github.com/BrunoTanabe) | [LinkedIn](https://www.linkedin.com/in/tanabebruno/)
+I created this template to help other developers start FastAPI projects in an organized and secure way. If you have suggestions or find issues, feel free to contribute!
