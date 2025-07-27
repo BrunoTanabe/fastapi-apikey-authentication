@@ -1,0 +1,12 @@
+name: "fastapi-apikey-authentication"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fastapi-apikey-authentication
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
