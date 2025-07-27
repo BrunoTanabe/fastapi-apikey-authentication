@@ -1,7 +1,7 @@
 [project]
 name = "fastapi-clean-architecture-ddd-template"
 version = "1.0.0"
-description = "Python FastAPI backend template, organized by Clean Architecture layers (domain, application, infrastructure, presentation) and DDD principles. Includes dependency management, Docker support, testing boilerplate, CI-friendly setup and best practices, modular scaffolding to jump-start new projects and ensure long-term maintainability."
+description = "A minimal, well-documented FastAPI application that demonstrates API Key authentication via header, query, and cookie, with dependency-based validation, optional scopes, reusable OpenAPI security components, and tests for easy reuse in real projects."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
